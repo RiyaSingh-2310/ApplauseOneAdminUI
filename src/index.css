@@ -1,0 +1,166 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './styles/colors.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+.admin-canvas {
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in oklab, var(--primary) 8%, transparent), transparent 28%),
+    var(--background);
+}
+
+.login-canvas {
+  background-image:
+    radial-gradient(circle at 18% 20%, color-mix(in oklab, var(--primary) 16%, transparent), transparent 28%),
+    radial-gradient(circle at 86% 12%, color-mix(in oklab, var(--gold) 18%, transparent), transparent 26%),
+    linear-gradient(180deg, var(--surface) 0%, var(--background) 100%);
+}
+
+.login-field {
+  background-color: var(--card) !important;
+  color: var(--foreground);
+  caret-color: var(--foreground);
+}
+
+.login-field:hover:not(:disabled):not(:focus-visible) {
+  background-color: var(--card) !important;
+  border-color: color-mix(in oklab, var(--ring) 40%, var(--input));
+}
+
+.login-field:focus-visible {
+  background-color: var(--card) !important;
+}
+
+.login-field:disabled {
+  background-color: var(--card) !important;
+}
+
+.login-field:autofill,
+.login-field:autofill:hover,
+.login-field:autofill:focus,
+.login-field:autofill:active,
+.login-field:-webkit-autofill,
+.login-field:-webkit-autofill:hover,
+.login-field:-webkit-autofill:focus,
+.login-field:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground);
+  border-color: var(--input);
+  background-color: var(--card) !important;
+  box-shadow: 0 0 0 1000px var(--card) inset !important;
+  transition: background-color 99999s ease-out 0s !important;
+}
+
+.login-field:autofill:focus-visible,
+.login-field:-webkit-autofill:focus-visible {
+  border-color: var(--ring);
+  box-shadow:
+    0 0 0 1000px var(--card) inset,
+    0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent) !important;
+}
+
+.login-field[aria-invalid='true']:autofill,
+.login-field[aria-invalid='true']:-webkit-autofill {
+  border-color: var(--destructive);
+  box-shadow:
+    0 0 0 1000px var(--card) inset,
+    0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent) !important;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 22%, white);
+  color: var(--foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,81 @@
+import type { ListQuery } from './common.types'
+import type { ProjectAssignment } from './project.types'
+import type { RewardTransaction } from './reward.types'
+
+export type Gender = 'male' | 'female' | 'other'
+export type AgeRange = '18-24' | '25-34' | '35-44' | '45-54' | '55+'
+export type PanelistStatus = 'active' | 'inactive' | 'pending'
+export type Education =
+  | 'high_school'
+  | 'some_college'
+  | 'bachelors'
+  | 'masters'
+  | 'doctorate'
+export type Employment =
+  | 'full_time'
+  | 'part_time'
+  | 'self_employed'
+  | 'unemployed'
+  | 'student'
+  | 'retired'
+export type HouseholdIncome =
+  | 'under_25k'
+  | '25k_49k'
+  | '50k_74k'
+  | '75k_99k'
+  | '100k_149k'
+  | '150k_plus'
+
+export interface SurveyPreferences {
+  shoppingPreference: string
+  preferredCategories: string[]
+  typicalSpend: string
+  researchParticipation: string
+}
+
+export interface Panelist {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  postalCode: string
+  gender: Gender
+  age: number
+  ageRange: AgeRange
+  education: Education
+  employment: Employment
+  householdIncome: HouseholdIncome
+  householdSize: number
+  status: PanelistStatus
+  rewardPoints: number
+  redeemedPoints: number
+  pendingPoints: number
+  lifetimePointsIssued: number
+  assignedProjectCount: number
+  completedProjectCount: number
+  registeredAt: string
+  surveyPreferences: SurveyPreferences
+}
+
+export interface PanelistDetail extends Panelist {
+  assignments: ProjectAssignment[]
+  recentRewards: RewardTransaction[]
+}
+
+export interface PanelistListQuery extends ListQuery {
+  status?: PanelistStatus | 'all'
+  gender?: Gender | 'all'
+  ageRange?: AgeRange | 'all'
+  registeredFrom?: string
+  registeredTo?: string
+}
+
+export interface UpdatePanelistInput {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  postalCode: string
+  status: PanelistStatus
+}

@@ -1,0 +1,207 @@
+import { Download } from 'lucide-react'
+import { useState } from 'react'
+import { DataTable } from '@/components/common/DataTable'
+import { FilterToolbar } from '@/components/common/FilterToolbar'
+import { SearchField } from '@/components/common/SearchField'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { RequestStatusBadge } from '@/components/shared/StatusBadge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useListQuery } from '@/hooks/useListQuery'
+import { usePanelistOptions } from '@/hooks/usePanelists'
+import { useExportRewardHistory, useRewardHistory } from '@/hooks/useRewardHistory'
+import { useRewardTypes } from '@/hooks/useRewards'
+import { getErrorMessage } from '@/lib/errors'
+import { formatCurrency, formatDateTime, formatNumber } from '@/lib/format'
+import { REQUEST_STATUS_LABELS } from '@/lib/labels'
+import type { RewardHistoryQuery, RewardRequestStatus } from '@/types'
+
+const defaultQuery: RewardHistoryQuery = {
+  page: 1,
+  pageSize: 10,
+  sortBy: 'transactionDate',
+  sortDir: 'desc',
+  status: 'all',
+  rewardType: 'all',
+}
+
+export function RewardHistoryPage() {
+  const { search, setSearch, filters, setFilters, query, reset, setPage } = useListQuery(defaultQuery)
+  const list = useRewardHistory(query)
+  const types = useRewardTypes()
+  const panelists = usePanelistOptions()
+  const exportCsv = useExportRewardHistory(query)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const rows = list.data?.data ?? []
+
+  function renderFilters() {
+    return (
+      <div className="grid gap-3 lg:grid-cols-4">
+        <Select
+          value={filters.panelistId ?? 'all'}
+          onValueChange={(value) =>
+            setFilters((current) => ({ ...current, page: 1, panelistId: value === 'all' ? undefined : value }))
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Panelist" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All panelists</SelectItem>
+            {(panelists.data ?? []).map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={filters.status ?? 'all'}
+          onValueChange={(value) =>
+            setFilters((current) => ({ ...current, page: 1, status: value as RewardRequestStatus | 'all' }))
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {Object.entries(REQUEST_STATUS_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={filters.rewardType ?? 'all'}
+          onValueChange={(value) => setFilters((current) => ({ ...current, page: 1, rewardType: value }))}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Reward type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            {(types.data ?? []).map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="grid grid-cols-2 gap-2">
+          <Input
+            type="date"
+            aria-label="From date"
+            value={filters.dateFrom ?? ''}
+            onChange={(event) => setFilters((current) => ({ ...current, page: 1, dateFrom: event.target.value }))}
+          />
+          <Input
+            type="date"
+            aria-label="To date"
+            value={filters.dateTo ?? ''}
+            onChange={(event) => setFilters((current) => ({ ...current, page: 1, dateTo: event.target.value }))}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Reward History"
+        description="Every approved, rejected, and completed redemption in one ledger."
+        crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Reward History' }]}
+        actions={
+          <Button variant="outline" onClick={() => exportCsv.mutate()} disabled={exportCsv.isPending}>
+            <Download className="size-4" />
+            {exportCsv.isPending ? 'Exporting…' : 'Export CSV'}
+          </Button>
+        }
+      />
+
+      <DataTable
+        toolbar={
+          <FilterToolbar
+            search={
+              <SearchField
+                value={search}
+                onChange={(value) => {
+                  setSearch(value)
+                  setFilters((current) => ({ ...current, page: 1 }))
+                }}
+                placeholder="Search panelist, reward, or request ID"
+                searching={search !== query.search}
+              />
+            }
+            renderFilters={renderFilters}
+            mobileOpen={filterOpen}
+            onMobileOpenChange={setFilterOpen}
+            onClear={reset}
+          />
+        }
+        loading={list.isLoading}
+        error={list.isError ? getErrorMessage(list.error) : undefined}
+        onRetry={() => list.refetch()}
+        emptyTitle="No reward history found."
+        page={list.data?.page}
+        pageSize={list.data?.pageSize}
+        total={list.data?.total ?? 0}
+        onPageChange={setPage}
+      >
+        <div className="space-y-3 p-4 md:hidden">
+          {rows.map((item) => (
+            <div key={item.id} className="rounded-2xl border px-4 py-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{item.panelistName}</p>
+                  <p className="text-xs text-muted-foreground">{item.rewardName}</p>
+                </div>
+                <RequestStatusBadge status={item.status} />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {formatDateTime(item.transactionDate)} · {formatNumber(item.points)} pts · {item.requestId}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Panelist</TableHead>
+                <TableHead>Reward</TableHead>
+                <TableHead>Points</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Transaction date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Request ID</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.panelistName}</TableCell>
+                  <TableCell>
+                    <p>{item.rewardName}</p>
+                    <p className="text-xs text-muted-foreground">{item.rewardType}</p>
+                  </TableCell>
+                  <TableCell>{formatNumber(item.points)}</TableCell>
+                  <TableCell>{formatCurrency(item.value, item.currency)}</TableCell>
+                  <TableCell>{formatDateTime(item.transactionDate)}</TableCell>
+                  <TableCell>
+                    <RequestStatusBadge status={item.status} />
+                  </TableCell>
+                  <TableCell>{item.requestId}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </DataTable>
+    </div>
+  )
+}

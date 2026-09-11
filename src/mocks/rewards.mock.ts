@@ -1,0 +1,1 @@
+export { seedRewards } from './seed'
