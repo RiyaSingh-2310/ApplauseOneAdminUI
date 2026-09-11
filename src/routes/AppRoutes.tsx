@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Skeleton } from '@/components/ui/skeleton'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 import { GuestRoute, ProtectedRoute } from '@/routes/ProtectedRoute'
 
 const LoginPage = lazy(() => import('@/pages/auth/AdminLogin').then((module) => ({ default: module.AdminLogin })))
@@ -70,7 +71,8 @@ export function AppRoutes() {
         </Route>
 
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   )

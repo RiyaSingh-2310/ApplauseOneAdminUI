@@ -1,17 +1,43 @@
+import { copyFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
+
+const root = path.dirname(fileURLToPath(import.meta.url))
+
+/** Static hosts that 404 missing paths (GitHub Pages, S3 error documents) can serve 404.html as the SPA. */
+function spaFallbackHtml(): Plugin {
+  return {
+    name: 'spa-fallback-html',
+    closeBundle: {
+      sequential: true,
+      order: 'post',
+      handler() {
+        const index = path.join(root, 'dist/index.html')
+        if (existsSync(index)) {
+          copyFileSync(index, path.join(root, 'dist/404.html'))
+        }
+      },
+    },
+  }
+}
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  appType: 'spa',
+  plugins: [react(), tailwindcss(), spaFallbackHtml()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(root, './src'),
     },
   },
   server: {
     port: 5174,
+    strictPort: false,
+  },
+  preview: {
+    port: 4174,
     strictPort: false,
   },
 })
