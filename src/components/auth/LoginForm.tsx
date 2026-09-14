@@ -98,12 +98,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               setErrors((current) => ({ ...current, email: validateAdminEmail(email) }))
             }}
             aria-invalid={Boolean(showEmailError)}
-            aria-describedby="admin-email-error"
+            aria-describedby={showEmailError ? 'admin-email-error' : undefined}
             className="login-field h-10 bg-card dark:bg-card"
           />
-          <p id="admin-email-error" className="min-h-5 text-xs text-destructive" role={showEmailError ? 'alert' : undefined}>
-            {showEmailError ? errors.email : '\u00a0'}
-          </p>
+          {showEmailError ? (
+            <p id="admin-email-error" className="text-xs text-destructive" role="alert">
+              {errors.email}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-1.5">
@@ -113,20 +115,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             value={password}
             disabled={pending}
             invalid={Boolean(showPasswordError)}
-            describedBy="admin-password-error"
+            describedBy={showPasswordError ? 'admin-password-error' : undefined}
             onChange={updatePassword}
             onBlur={() => {
               setTouched((current) => ({ ...current, password: true }))
               setErrors((current) => ({ ...current, password: validateAdminPassword(password) }))
             }}
           />
-          <p
-            id="admin-password-error"
-            className="min-h-5 text-xs text-destructive"
-            role={showPasswordError ? 'alert' : undefined}
-          >
-            {showPasswordError ? errors.password : '\u00a0'}
-          </p>
+          {showPasswordError ? (
+            <p id="admin-password-error" className="text-xs text-destructive" role="alert">
+              {errors.password}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-between gap-3">

@@ -57,7 +57,7 @@ export function AdminHeader({
         <div className="lg:hidden">
           <Logo compact />
         </div>
-        <p className="hidden text-sm text-muted-foreground md:block">Internal administration</p>
+        {/* <p className="hidden text-sm text-muted-foreground md:block">Internal administration</p> */}
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
         <ThemeToggle />

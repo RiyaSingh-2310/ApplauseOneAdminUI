@@ -14,7 +14,7 @@ export function AdminLogin() {
       <section className="relative hidden overflow-hidden bg-primary px-8 py-10 text-primary-foreground md:px-12 lg:flex lg:flex-col lg:justify-between">
         <Logo inverted to="/admin/login" />
         <div className="max-w-md">
-          <p className="text-sm tracking-[0.18em] uppercase text-primary-foreground/70">Internal administration</p>
+          {/* <p className="text-sm tracking-[0.18em] uppercase text-primary-foreground/70">Internal administration</p> */}
           <h1 className="font-display mt-4 text-4xl leading-tight xl:text-5xl">Operate the panel with clarity.</h1>
           <p className="mt-5 text-base leading-7 text-primary-foreground/80">
             Sign in to manage panelists, assignments, and rewards from a secure Applause One workspace.
