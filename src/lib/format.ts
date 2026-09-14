@@ -18,21 +18,31 @@ export function formatCurrency(value: number, currency = 'USD') {
 }
 
 export function formatDate(iso: string) {
+  const date = parseDate(iso)
+  if (!date) return iso || '—'
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(new Date(iso))
+  }).format(date)
 }
 
 export function formatDateTime(iso: string) {
+  const date = parseDate(iso)
+  if (!date) return iso || '—'
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-  }).format(new Date(iso))
+  }).format(date)
+}
+
+function parseDate(value: string) {
+  if (!value) return null
+  const date = new Date(value.includes('T') ? value : value.replace(' ', 'T'))
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 export function formatPoints(value: number) {

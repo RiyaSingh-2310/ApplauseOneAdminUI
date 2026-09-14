@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { isValidEmail, required } from '@/lib/validators'
+import { required } from '@/lib/validators'
 import type { Panelist, PanelistStatus, UpdatePanelistInput } from '@/types'
 
 export function PanelistEditDialog({
@@ -66,8 +66,8 @@ function PanelistEditForm({
   function submit() {
     const next = {
       firstName: required(form.firstName, 'First name') ?? '',
-      lastName: required(form.lastName, 'Last name') ?? '',
-      email: required(form.email, 'Email') ?? (!isValidEmail(form.email) ? 'Enter a valid email.' : ''),
+      lastName: '',
+      email: '',
     }
     setErrors(next)
     if (Object.values(next).some(Boolean)) return
@@ -88,13 +88,10 @@ function PanelistEditForm({
             <Input value={form.lastName} onChange={(event) => setForm({ ...form, lastName: event.target.value })} />
           </Field>
           <Field label="Email" className="sm:col-span-2" error={errors.email}>
-            <Input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+            <Input value={form.email} disabled />
           </Field>
           <Field label="Phone">
             <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
-          </Field>
-          <Field label="ZIP / Postal code">
-            <Input value={form.postalCode} onChange={(event) => setForm({ ...form, postalCode: event.target.value })} />
           </Field>
           <Field label="Status" className="sm:col-span-2">
             <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as PanelistStatus })}>

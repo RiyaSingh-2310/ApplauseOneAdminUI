@@ -40,13 +40,13 @@ export interface Panelist {
   email: string
   phone: string
   postalCode: string
-  gender: Gender
-  age: number
-  ageRange: AgeRange
-  education: Education
-  employment: Employment
-  householdIncome: HouseholdIncome
-  householdSize: number
+  gender?: Gender
+  age?: number
+  ageRange?: AgeRange
+  education?: Education
+  employment?: Employment
+  householdIncome?: HouseholdIncome
+  householdSize?: number
   status: PanelistStatus
   rewardPoints: number
   redeemedPoints: number
@@ -63,14 +63,6 @@ export interface PanelistDetail extends Panelist {
   recentRewards: RewardTransaction[]
 }
 
-export interface PanelistListQuery extends ListQuery {
-  status?: PanelistStatus | 'all'
-  gender?: Gender | 'all'
-  ageRange?: AgeRange | 'all'
-  registeredFrom?: string
-  registeredTo?: string
-}
-
 export interface UpdatePanelistInput {
   firstName: string
   lastName: string
@@ -78,4 +70,12 @@ export interface UpdatePanelistInput {
   phone: string
   postalCode: string
   status: PanelistStatus
+}
+
+export interface PanelistListQuery extends ListQuery {
+  status?: PanelistStatus | 'all'
+  gender?: Gender | 'all'
+  ageRange?: AgeRange | 'all'
+  registeredFrom?: string
+  registeredTo?: string
 }

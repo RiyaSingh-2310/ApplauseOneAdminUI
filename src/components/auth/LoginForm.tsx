@@ -32,6 +32,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [forgotOpen, setForgotOpen] = useState(false)
   const [touched, setTouched] = useState({ email: false, password: false })
   const [submitted, setSubmitted] = useState(false)
+  const [formError, setFormError] = useState('')
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
 
   const showEmailError = (touched.email || submitted) && errors.email
@@ -64,12 +65,15 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     if (nextErrors.email || nextErrors.password) return
 
     setPending(true)
+    setFormError('')
     try {
       await login({ email: email.trim(), password, remember })
       if (!reduceMotion) {
         await new Promise((resolve) => window.setTimeout(resolve, 120))
       }
       onSuccess()
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Invalid email or password.')
     } finally {
       setPending(false)
     }
@@ -151,6 +155,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
           {pending ? 'Signing in...' : 'Sign in'}
         </Button>
+        {formError ? (
+          <p className="text-center text-xs text-destructive" role="alert">
+            {formError}
+          </p>
+        ) : null}
       </form>
 
       <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
@@ -158,7 +167,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <DialogHeader>
             <DialogTitle>Reset your password</DialogTitle>
             <DialogDescription>
-              Password reset will be available once authentication is connected.
+            Password reset for administrators is not available on the hosted API yet.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

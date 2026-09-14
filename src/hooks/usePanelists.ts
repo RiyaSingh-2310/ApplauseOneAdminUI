@@ -68,3 +68,19 @@ export function useDeactivatePanelist(onSuccess?: () => void) {
     onError: (error) => notify.error(error),
   })
 }
+
+export function useCreditPanelist(onSuccess?: () => void) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, points, remark }: { id: string; points: number; remark?: string }) =>
+      panelistService.credit(id, points, remark),
+    onSuccess: () => {
+      notify.success('Points credited successfully.')
+      invalidatePanelists(queryClient)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.rewardAnalytics })
+      onSuccess?.()
+    },
+    onError: (error) => notify.error(error),
+  })
+}

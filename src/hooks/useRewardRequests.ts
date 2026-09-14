@@ -31,7 +31,7 @@ export function useRewardRequestAction(onSuccess?: () => void) {
     }) => {
       if (action === 'approve') return rewardRequestService.approve(id)
       if (action === 'reject') return rewardRequestService.reject(id)
-      return rewardRequestService.complete(id)
+      return rewardRequestService.approve(id)
     },
     onSuccess: (_data, variables) => {
       notify.success(

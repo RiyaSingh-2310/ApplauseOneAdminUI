@@ -32,9 +32,11 @@ export const demoAdmin: AdminUser = {
 }
 
 export const defaultSettings: AdminSettings = {
-  defaultPageSize: 10,
-  emailAlerts: true,
-  requestAlerts: true,
+  registrationRewardPoints: 100,
+  minimumPayout: 500,
+  amazonEnabled: true,
+  flipkartEnabled: true,
+  paypalEnabled: true,
 }
 
 const firstNames = [
@@ -415,6 +417,10 @@ function series(points: number, startValue: number, step: number, label: (index:
   })
 }
 
+function defined<T>(items: Array<T | undefined>): T[] {
+  return items.filter((item): item is T => item != null)
+}
+
 function countBy<T extends string>(items: T[], labels: Record<T, string>) {
   const totals = new Map<T, number>()
   for (const item of items) totals.set(item, (totals.get(item) ?? 0) + 1)
@@ -437,23 +443,23 @@ export const seedDashboard: DashboardAnalytics = {
 }
 
 export const seedPanelistAnalytics: PanelistAnalytics = {
-  gender: countBy(seedPanelists.map((item) => item.gender), GENDER_LABELS).map((item, index) => ({
+  gender: countBy(defined(seedPanelists.map((item) => item.gender)), GENDER_LABELS).map((item, index) => ({
     ...item,
     value: [5720, 6110, 628][index] ?? item.value,
   })),
-  ageRange: countBy(seedPanelists.map((item) => item.ageRange), AGE_RANGE_LABELS).map((item, index) => ({
+  ageRange: countBy(defined(seedPanelists.map((item) => item.ageRange)), AGE_RANGE_LABELS).map((item, index) => ({
     ...item,
     value: [2140, 3980, 2870, 2010, 1458][index] ?? item.value,
   })),
-  education: countBy(seedPanelists.map((item) => item.education), EDUCATION_LABELS).map((item, index) => ({
+  education: countBy(defined(seedPanelists.map((item) => item.education)), EDUCATION_LABELS).map((item, index) => ({
     ...item,
     value: [1860, 2740, 4920, 2210, 728][index] ?? item.value,
   })),
-  employment: countBy(seedPanelists.map((item) => item.employment), EMPLOYMENT_LABELS).map((item, index) => ({
+  employment: countBy(defined(seedPanelists.map((item) => item.employment)), EMPLOYMENT_LABELS).map((item, index) => ({
     ...item,
     value: [6840, 1490, 1120, 740, 1580, 688][index] ?? item.value,
   })),
-  householdIncome: countBy(seedPanelists.map((item) => item.householdIncome), INCOME_LABELS).map((item, index) => ({
+  householdIncome: countBy(defined(seedPanelists.map((item) => item.householdIncome)), INCOME_LABELS).map((item, index) => ({
     ...item,
     value: [980, 2140, 3010, 2760, 2280, 1288][index] ?? item.value,
   })),

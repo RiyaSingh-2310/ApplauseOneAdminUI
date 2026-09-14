@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useListQuery } from '@/hooks/useListQuery'
 import { useRewardRequestAction, useRewardRequestList } from '@/hooks/useRewardRequests'
 import { getErrorMessage } from '@/lib/errors'
-import { formatCurrency, formatDateTime, formatNumber } from '@/lib/format'
+import { formatDateTime, formatNumber } from '@/lib/format'
 import { REQUEST_STATUS_LABELS } from '@/lib/labels'
 import type { RewardRequest, RewardRequestListQuery, RewardRequestStatus } from '@/types'
 
@@ -25,7 +25,7 @@ const defaultQuery: RewardRequestListQuery = {
   status: 'all',
 }
 
-type Decision = { request: RewardRequest; action: 'approve' | 'reject' | 'complete' }
+type Decision = { request: RewardRequest; action: 'approve' | 'reject' }
 
 export function RewardRequestsPage() {
   const { search, setSearch, filters, setFilters, query, reset, setPage } = useListQuery(defaultQuery)
@@ -39,14 +39,9 @@ export function RewardRequestsPage() {
   const copy = decision
     ? {
         title:
-          decision.action === 'approve'
-            ? 'Approve this request?'
-            : decision.action === 'reject'
-              ? 'Reject this request?'
-              : 'Mark this request completed?',
+          decision.action === 'approve' ? 'Approve this request?' : 'Reject this request?',
         description: `${decision.request.panelistName} requested ${decision.request.rewardName} for ${formatNumber(decision.request.points)} points.`,
-        confirmLabel:
-          decision.action === 'approve' ? 'Approve' : decision.action === 'reject' ? 'Reject' : 'Mark completed',
+        confirmLabel: decision.action === 'approve' ? 'Approve' : 'Reject',
       }
     : null
 
@@ -77,7 +72,7 @@ export function RewardRequestsPage() {
     <div>
       <PageHeader
         title="Reward Requests"
-        description="Approve, reject, or complete redemptions before points leave the ledger."
+        description="Approve or reject redemptions before points leave the ledger."
         crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Reward Requests' }]}
       />
 
@@ -139,7 +134,6 @@ export function RewardRequestsPage() {
               <TableHead>Panelist</TableHead>
               <TableHead>Reward</TableHead>
               <TableHead>Points</TableHead>
-              <TableHead>Cash value</TableHead>
               <TableHead>Request date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -155,7 +149,6 @@ export function RewardRequestsPage() {
                   <p className="text-xs text-muted-foreground">{item.rewardType}</p>
                 </TableCell>
                 <TableCell>{formatNumber(item.points)}</TableCell>
-                <TableCell>{formatCurrency(item.cashValue, item.currency)}</TableCell>
                 <TableCell>{formatDateTime(item.requestedAt)}</TableCell>
                 <TableCell>
                   <RequestStatusBadge status={item.status} />
@@ -172,11 +165,6 @@ export function RewardRequestsPage() {
                           Reject
                         </DropdownMenuItem>
                       </>
-                    ) : null}
-                    {item.status === 'approved' ? (
-                      <DropdownMenuItem onClick={() => setDecision({ request: item, action: 'complete' })}>
-                        Mark as completed
-                      </DropdownMenuItem>
                     ) : null}
                   </RowActions>
                 </TableCell>
@@ -197,7 +185,6 @@ export function RewardRequestsPage() {
               <p><span className="text-muted-foreground">Panelist:</span> {viewing.panelistName}</p>
               <p><span className="text-muted-foreground">Reward:</span> {viewing.rewardName}</p>
               <p><span className="text-muted-foreground">Points:</span> {formatNumber(viewing.points)}</p>
-              <p><span className="text-muted-foreground">Value:</span> {formatCurrency(viewing.cashValue, viewing.currency)}</p>
               <p><span className="text-muted-foreground">Requested:</span> {formatDateTime(viewing.requestedAt)}</p>
               {viewing.notes ? <p className="leading-6">{viewing.notes}</p> : null}
             </div>

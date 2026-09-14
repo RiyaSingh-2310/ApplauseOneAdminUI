@@ -22,16 +22,3 @@ export function useSaveSettings() {
     onError: (error) => notify.error(error),
   })
 }
-
-export function useResetDemo(onSuccess?: () => void) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: () => settingsService.resetDemo(),
-    onSuccess: () => {
-      notify.success('Demo data restored.')
-      void queryClient.invalidateQueries()
-      onSuccess?.()
-    },
-    onError: (error) => notify.error(error),
-  })
-}

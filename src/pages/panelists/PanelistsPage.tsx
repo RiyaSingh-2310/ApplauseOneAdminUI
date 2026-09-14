@@ -177,7 +177,7 @@ export function PanelistsPage() {
                 <PanelistStatusBadge status={panelist.status} />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {formatDate(panelist.registeredAt)} · {formatNumber(panelist.rewardPoints)} pts · {panelist.assignedProjectCount} projects
+                  {formatDate(panelist.registeredAt)} · {formatNumber(panelist.rewardPoints)} pts
               </p>
             </div>
           ))}
@@ -224,8 +224,8 @@ export function PanelistsPage() {
                   </Link>
                 </TableCell>
                 <TableCell>{panelist.email}</TableCell>
-                <TableCell>{GENDER_LABELS[panelist.gender]}</TableCell>
-                <TableCell>{AGE_RANGE_LABELS[panelist.ageRange]}</TableCell>
+                <TableCell>{panelist.gender ? GENDER_LABELS[panelist.gender] : '—'}</TableCell>
+                <TableCell>{panelist.ageRange ? AGE_RANGE_LABELS[panelist.ageRange] : '—'}</TableCell>
                 <TableCell>{formatDate(panelist.registeredAt)}</TableCell>
                 <TableCell>
                   <PanelistStatusBadge status={panelist.status} />

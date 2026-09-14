@@ -1,38 +1,35 @@
+import { useState } from 'react'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/context/AuthContext'
-import { useResetDemo, useSaveSettings, useSettings } from '@/hooks/useSettings'
+import { useSaveSettings, useSettings } from '@/hooks/useSettings'
 import { useTheme } from '@/hooks/useTheme'
-import { isMockMode } from '@/lib/env'
 import { getErrorMessage } from '@/lib/errors'
-import { useState } from 'react'
+import type { AdminSettings } from '@/types'
 
 export function SettingsPage() {
   const { user, logout } = useAuth()
   const { theme } = useTheme()
-  const [resetOpen, setResetOpen] = useState(false)
   const settings = useSettings()
   const save = useSaveSettings()
-  const reset = useResetDemo(() => setResetOpen(false))
+  const [draft, setDraft] = useState<AdminSettings | null>(null)
+  const form = draft ?? settings.data ?? null
 
   if (settings.isLoading) return <LoadingSkeleton />
   if (settings.isError) return <ErrorState message={getErrorMessage(settings.error)} onRetry={() => settings.refetch()} />
-  if (!settings.data) return null
-
-  const current = settings.data
+  if (!form) return null
 
   return (
     <div>
       <PageHeader
         title="Settings"
-        description="Appearance, administrator profile, and workspace preferences."
+        description="Appearance, administrator profile, and payout configuration."
         crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Settings' }]}
       />
 
@@ -54,85 +51,82 @@ export function SettingsPage() {
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="font-display text-xl">Administrator</CardTitle>
-            <CardDescription>Signed in with a token-ready admin session.</CardDescription>
+            <CardDescription>Signed in with a live admin token.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <p><span className="text-muted-foreground">Name:</span> {user?.name}</p>
             <p><span className="text-muted-foreground">Email:</span> {user?.email}</p>
             <p><span className="text-muted-foreground">Role:</span> {user?.role}</p>
-            <p><span className="text-muted-foreground">Data mode:</span> {isMockMode() ? 'Mock services' : 'Live API'}</p>
             <Button variant="outline" onClick={logout}>
               Logout
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card className="shadow-sm xl:col-span-2">
           <CardHeader>
-            <CardTitle className="font-display text-xl">Workspace</CardTitle>
-            <CardDescription>These preferences stay on this administrator account.</CardDescription>
+            <CardTitle className="font-display text-xl">Payout settings</CardTitle>
+            <CardDescription>Registration points, minimum payout, and enabled payment methods.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Default table page size</Label>
-              <Select
-                value={String(current.defaultPageSize)}
-                onValueChange={(value) => save.mutate({ ...current, defaultPageSize: Number(value) })}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="registration-points">Registration reward points</Label>
+              <Input
+                id="registration-points"
+                type="number"
+                min={0}
+                value={form.registrationRewardPoints}
+                onChange={(event) =>
+                  setDraft({ ...form, registrationRewardPoints: Number(event.target.value) })
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="minimum-payout">Minimum payout</Label>
+              <Input
+                id="minimum-payout"
+                type="number"
+                min={0}
+                value={form.minimumPayout}
+                onChange={(event) => setDraft({ ...form, minimumPayout: Number(event.target.value) })}
+              />
             </div>
             <label className="flex items-center justify-between gap-4 text-sm">
-              <span>Email alerts for new panelists</span>
+              <span>Amazon enabled</span>
               <Switch
-                checked={current.emailAlerts}
-                onCheckedChange={(checked) => save.mutate({ ...current, emailAlerts: checked })}
+                checked={form.amazonEnabled}
+                onCheckedChange={(checked) => setDraft({ ...form, amazonEnabled: checked })}
               />
             </label>
             <label className="flex items-center justify-between gap-4 text-sm">
-              <span>Alerts for pending reward requests</span>
+              <span>Flipkart enabled</span>
               <Switch
-                checked={current.requestAlerts}
-                onCheckedChange={(checked) => save.mutate({ ...current, requestAlerts: checked })}
+                checked={form.flipkartEnabled}
+                onCheckedChange={(checked) => setDraft({ ...form, flipkartEnabled: checked })}
               />
             </label>
+            <label className="flex items-center justify-between gap-4 text-sm">
+              <span>PayPal enabled</span>
+              <Switch
+                checked={form.paypalEnabled}
+                onCheckedChange={(checked) => setDraft({ ...form, paypalEnabled: checked })}
+              />
+            </label>
+            <div className="sm:col-span-2">
+              <Button
+                disabled={save.isPending}
+                onClick={() =>
+                  save.mutate(form, {
+                    onSuccess: () => setDraft(null),
+                  })
+                }
+              >
+                {save.isPending ? 'Saving…' : 'Save settings'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      {isMockMode() ? (
-        <Card className="mt-4 shadow-sm">
-          <CardHeader>
-            <CardTitle className="font-display text-xl">Demo data</CardTitle>
-            <CardDescription>
-              Restore the original mock panelists, assignments, and reward ledger for this workspace.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" onClick={() => setResetOpen(true)}>
-              Reset mock data
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <ConfirmDialog
-        open={resetOpen}
-        onOpenChange={setResetOpen}
-        title="Reset demo data?"
-        description="Local assignments, reward decisions, and catalog edits in this browser will be restored to the seed set."
-        confirmLabel="Reset"
-        destructive
-        pending={reset.isPending}
-        onConfirm={() => reset.mutate()}
-      />
     </div>
   )
 }

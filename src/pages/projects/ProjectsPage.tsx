@@ -105,7 +105,7 @@ export function ProjectsPage() {
         error={list.isError ? getErrorMessage(list.error) : undefined}
         onRetry={() => list.refetch()}
         emptyTitle="No projects assigned."
-        emptyDescription="Assign a survey to a panelist to get started."
+        emptyDescription="Project assignment is not available on the hosted API yet."
         page={list.data?.page}
         pageSize={list.data?.pageSize}
         total={list.data?.total ?? 0}

@@ -50,9 +50,11 @@ export interface ForgotPasswordInput {
 }
 
 export interface AdminSettings {
-  defaultPageSize: number
-  emailAlerts: boolean
-  requestAlerts: boolean
+  registrationRewardPoints: number
+  minimumPayout: number
+  amazonEnabled: boolean
+  flipkartEnabled: boolean
+  paypalEnabled: boolean
 }
 
 export interface LookupOption {

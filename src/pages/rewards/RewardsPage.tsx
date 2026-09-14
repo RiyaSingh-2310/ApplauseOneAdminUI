@@ -131,7 +131,8 @@ export function RewardsPage() {
         loading={list.isLoading}
         error={list.isError ? getErrorMessage(list.error) : undefined}
         onRetry={() => list.refetch()}
-        emptyTitle="No rewards found."
+        emptyTitle="No rewards catalog yet."
+        emptyDescription="The hosted API does not expose a rewards catalog. Payout methods are managed in Settings, and panelist payouts appear under Reward Requests."
         page={list.data?.page}
         pageSize={list.data?.pageSize}
         total={list.data?.total ?? 0}

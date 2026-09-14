@@ -37,8 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .me()
       .then((next) => setUser(next))
       .catch(() => {
-        clearSession()
-        setUser(null)
+        const existing = readSession()
+        if (existing) setUser(existing.user)
+        else {
+          clearSession()
+          setUser(null)
+        }
       })
       .finally(() => setReady(true))
   }, [])

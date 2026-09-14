@@ -1,20 +1,29 @@
-import { apiRequest, toSearch } from '@/lib/http'
+import { ApiError } from '@/lib/errors'
+import { fetchRewardRequests } from '@/services/rewardRequest.service'
 import type { LookupOption, PaginatedResult, Reward, RewardInput, RewardListQuery } from '@/types'
 
+const UNAVAILABLE = 'A rewards catalog API is not available. Payout methods are managed in Settings.'
+
 export const rewardService = {
-  list(query: RewardListQuery = {}) {
-    return apiRequest<PaginatedResult<Reward>>(`/admin/rewards${toSearch(query)}`)
+  async list(query: RewardListQuery = {}): Promise<PaginatedResult<Reward>> {
+    return { data: [], total: 0, page: 1, pageSize: query.pageSize ?? 10 }
   },
-  types() {
-    return apiRequest<LookupOption[]>('/admin/rewards/types')
+  async types(): Promise<LookupOption[]> {
+    const requests = await fetchRewardRequests()
+    const unique = [...new Set(requests.map((item) => item.rewardType).filter(Boolean))]
+    return unique.map((item) => ({ value: item, label: item }))
   },
-  create(input: RewardInput) {
-    return apiRequest<Reward>('/admin/rewards', { method: 'POST', body: input })
+  create(input: RewardInput): Promise<Reward> {
+    void input
+    throw new ApiError(UNAVAILABLE, 404)
   },
-  update(id: string, input: RewardInput) {
-    return apiRequest<Reward>(`/admin/rewards/${id}`, { method: 'PATCH', body: input })
+  update(id: string, input: RewardInput): Promise<Reward> {
+    void id
+    void input
+    throw new ApiError(UNAVAILABLE, 404)
   },
-  remove(id: string) {
-    return apiRequest<{ ok: boolean }>(`/admin/rewards/${id}`, { method: 'DELETE' })
+  remove(id: string): Promise<{ ok: boolean }> {
+    void id
+    throw new ApiError(UNAVAILABLE, 404)
   },
 }

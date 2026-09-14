@@ -92,5 +92,5 @@ export const REQUEST_STATUS_LABELS: Record<RewardRequestStatus, string> = {
 }
 
 export function fullName(firstName: string, lastName: string) {
-  return `${firstName} ${lastName}`
+  return [firstName, lastName].filter(Boolean).join(' ')
 }

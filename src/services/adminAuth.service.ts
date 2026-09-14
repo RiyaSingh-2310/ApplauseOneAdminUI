@@ -1,27 +1,25 @@
 import { apiRequest } from '@/lib/http'
-import type { AdminUser, AuthSession, ForgotPasswordInput, LoginInput } from '@/types'
+import { mapAuthSession } from '@/lib/mappers'
+import { readSession } from '@/lib/session'
+import type { AdminUser, AuthSession, LoginInput } from '@/types'
+import type { ApiLoginData } from '@/types/api'
 
-/**
- * Authentication API boundary.
- * Temporary development mode: mock HTTP accepts any valid form and returns a session.
- * Later: replace the mock implementation with a real token response — Login UI stays the same.
- */
 export const adminAuthService = {
-  login(input: LoginInput) {
-    return apiRequest<AuthSession>('/admin/auth/login', {
+  async login(input: LoginInput): Promise<AuthSession> {
+    const data = await apiRequest<ApiLoginData>('/admin/login', {
       method: 'POST',
-      body: input,
+      body: { email: input.email, password: input.password },
       auth: false,
     })
+    if (!data?.token || !data.admin) {
+      throw new Error('Login did not return a token.')
+    }
+    return mapAuthSession(data, input)
   },
-  forgotPassword(input: ForgotPasswordInput) {
-    return apiRequest<{ ok: boolean }>('/admin/auth/forgot-password', {
-      method: 'POST',
-      body: input,
-      auth: false,
-    })
-  },
-  me() {
-    return apiRequest<AdminUser>('/admin/auth/me')
+  async me(): Promise<AdminUser> {
+    const session = readSession()
+    if (!session?.token) throw new Error('Your session has expired. Please sign in again.')
+    await apiRequest('/admin/settings')
+    return session.user
   },
 }

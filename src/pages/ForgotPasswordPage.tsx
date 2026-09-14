@@ -13,7 +13,7 @@ export function ForgotPasswordPage() {
         <Logo to="/admin/login" />
         <h1 className="font-display mt-6 text-3xl">Reset your password</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Password reset will be available once authentication is connected.
+          Password reset for administrators is not available on the hosted API yet.
         </p>
         <Button asChild className="mt-6 w-full">
           <Link to="/admin/login">Back to sign in</Link>

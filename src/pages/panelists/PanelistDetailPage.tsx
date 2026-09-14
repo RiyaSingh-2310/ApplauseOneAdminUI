@@ -1,14 +1,25 @@
 import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { AssignmentStatusBadge, PanelistStatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { usePanelist } from '@/hooks/usePanelists'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Field } from '@/components/shared/Field'
+import { useCreditPanelist, usePanelist } from '@/hooks/usePanelists'
 import { getErrorMessage } from '@/lib/errors'
-import { formatCurrency, formatDate, formatNumber, formatPoints } from '@/lib/format'
+import { formatDate, formatNumber, formatPoints } from '@/lib/format'
 import {
   AGE_RANGE_LABELS,
   EDUCATION_LABELS,
@@ -30,6 +41,10 @@ function Info({ label, value }: { label: string; value: string | number }) {
 export function PanelistDetailPage() {
   const { id = '' } = useParams()
   const detail = usePanelist(id)
+  const [creditOpen, setCreditOpen] = useState(false)
+  const [points, setPoints] = useState('100')
+  const [remark, setRemark] = useState('Manual credit')
+  const credit = useCreditPanelist(() => setCreditOpen(false))
 
   if (detail.isLoading) return <LoadingSkeleton rows={6} />
   if (detail.isError) return <ErrorState message={getErrorMessage(detail.error)} onRetry={() => detail.refetch()} />
@@ -49,12 +64,17 @@ export function PanelistDetailPage() {
           { label: name },
         ]}
         actions={
-          <Button asChild variant="outline">
-            <Link to="/admin/panelists">
-              <ArrowLeft className="size-4" />
-              Back to panelists
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setCreditOpen(true)}>
+              Credit points
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/admin/panelists">
+                <ArrowLeft className="size-4" />
+                Back to panelists
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -71,20 +91,20 @@ export function PanelistDetailPage() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Info label="Name" value={name} />
             <Info label="Email" value={panelist.email} />
-            <Info label="Phone" value={panelist.phone} />
-            <Info label="ZIP / Postal code" value={panelist.postalCode} />
+            <Info label="Phone" value={panelist.phone || '—'} />
+            <Info label="Verified" value={panelist.status === 'pending' ? 'No' : 'Yes'} />
           </CardContent>
           <Separator />
           <CardHeader>
             <CardTitle className="font-display text-xl">Demographics</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Info label="Age" value={`${panelist.age} · ${AGE_RANGE_LABELS[panelist.ageRange]}`} />
-            <Info label="Gender" value={GENDER_LABELS[panelist.gender]} />
-            <Info label="Education" value={EDUCATION_LABELS[panelist.education]} />
-            <Info label="Employment" value={EMPLOYMENT_LABELS[panelist.employment]} />
-            <Info label="Household income" value={INCOME_LABELS[panelist.householdIncome]} />
-            <Info label="Household size" value={panelist.householdSize} />
+            <Info label="Age" value={panelist.ageRange ? `${panelist.age ?? '—'} · ${AGE_RANGE_LABELS[panelist.ageRange]}` : '—'} />
+            <Info label="Gender" value={panelist.gender ? GENDER_LABELS[panelist.gender] : '—'} />
+            <Info label="Education" value={panelist.education ? EDUCATION_LABELS[panelist.education] : '—'} />
+            <Info label="Employment" value={panelist.employment ? EMPLOYMENT_LABELS[panelist.employment] : '—'} />
+            <Info label="Household income" value={panelist.householdIncome ? INCOME_LABELS[panelist.householdIncome] : '—'} />
+            <Info label="Household size" value={panelist.householdSize || '—'} />
           </CardContent>
         </Card>
 
@@ -140,7 +160,7 @@ export function PanelistDetailPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {panelist.assignments.length === 0 ? (
-            <EmptyState title="No projects assigned." />
+            <EmptyState title="No projects assigned." description="Project assignment is not available on the hosted API yet." />
           ) : (
             panelist.assignments.map((assignment) => (
               <div key={assignment.id} className="flex flex-col gap-2 rounded-2xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -181,13 +201,38 @@ export function PanelistDetailPage() {
                 </div>
                 <div className="text-right">
                   <p>{formatPoints(item.points)}</p>
-                  <p className="text-xs text-muted-foreground">{formatCurrency(item.value, item.currency)}</p>
                 </div>
               </div>
             ))
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={creditOpen} onOpenChange={setCreditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Credit points</DialogTitle>
+            <DialogDescription>Manually add points to this panelist’s balance.</DialogDescription>
+          </DialogHeader>
+          <Field label="Points">
+            <Input type="number" min={1} value={points} onChange={(event) => setPoints(event.target.value)} />
+          </Field>
+          <Field label="Remark">
+            <Input value={remark} onChange={(event) => setRemark(event.target.value)} />
+          </Field>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreditOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={credit.isPending}
+              onClick={() => credit.mutate({ id: panelist.id, points: Number(points), remark })}
+            >
+              {credit.isPending ? 'Crediting…' : 'Credit points'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
