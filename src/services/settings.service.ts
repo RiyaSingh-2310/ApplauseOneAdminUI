@@ -1,4 +1,4 @@
-import { apiRequest } from '@/lib/http'
+import { apiRequest } from '@/lib/apiClient'
 import { mapSettings } from '@/lib/mappers'
 import type { AdminSettings } from '@/types'
 import type { ApiSettings, ApiSettingsData, ApiSettingsInput } from '@/types/api'

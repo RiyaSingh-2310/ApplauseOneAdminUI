@@ -1,4 +1,4 @@
-import { apiRequest, toSearch } from '@/lib/http'
+import { apiRequest, toSearch } from '@/lib/apiClient'
 import {
   buildDashboard,
   buildPanelistAnalytics,

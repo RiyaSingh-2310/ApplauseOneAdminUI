@@ -1,5 +1,5 @@
 import { ApiError } from '@/lib/errors'
-import { apiRequest, toSearch } from '@/lib/http'
+import { apiRequest, toSearch } from '@/lib/apiClient'
 import {
   joinName,
   mapPanelist,

@@ -1,4 +1,4 @@
-import { apiRequest } from '@/lib/http'
+import { apiRequest } from '@/lib/apiClient'
 import { mapAuthSession } from '@/lib/mappers'
 import { readSession } from '@/lib/session'
 import type { AdminUser, AuthSession, LoginInput } from '@/types'

@@ -1,8 +1,7 @@
 {
   "build": {
     "env": {
-      "VITE_API_BASE_URL": "https://arserviceco.com/applauseoneapi",
-      "VITE_USE_MOCK": "false"
+      "VITE_API_BASE_URL": "https://arserviceco.com/applauseoneapi"
     }
   },
   "rewrites": [

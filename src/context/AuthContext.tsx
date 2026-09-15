@@ -7,7 +7,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { onUnauthorized } from '@/lib/http'
+import { onUnauthorized } from '@/lib/apiClient'
+import { ApiError } from '@/lib/errors'
 import { clearSession, readSession, writeSession } from '@/lib/session'
 import { adminAuthService } from '@/services/adminAuth.service'
 import type { AdminUser, LoginInput } from '@/types'
@@ -36,7 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     adminAuthService
       .me()
       .then((next) => setUser(next))
-      .catch(() => {
+      .catch((error) => {
+        if (error instanceof ApiError && error.status === 401) {
+          clearSession()
+          setUser(null)
+          return
+        }
         const existing = readSession()
         if (existing) setUser(existing.user)
         else {

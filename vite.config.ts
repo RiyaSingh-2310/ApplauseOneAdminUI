@@ -35,23 +35,9 @@ export default defineConfig({
   server: {
     port: 5174,
     strictPort: false,
-    proxy: {
-      '/applauseoneapi': {
-        target: 'https://arserviceco.com',
-        changeOrigin: true,
-        secure: true,
-      },
-    },
   },
   preview: {
     port: 4174,
     strictPort: false,
-    proxy: {
-      '/applauseoneapi': {
-        target: 'https://arserviceco.com',
-        changeOrigin: true,
-        secure: true,
-      },
-    },
   },
 })

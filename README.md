@@ -4,14 +4,13 @@ Vite + React admin app. Production API: [ApplauseOne Swagger](https://arservicec
 
 ## Environment
 
-Vite inlines `VITE_*` values **at build time**. Set these in `.env.development` locally and in Vercel → Project → Settings → Environment Variables for Production:
+Configuration lives in `.env` only:
 
-| Variable | Local (`npm run dev`) | Vercel / `vite build` |
-|---|---|---|
-| `VITE_API_BASE_URL` | `/applauseoneapi` (Vite proxy) | `https://arserviceco.com/applauseoneapi` |
-| `VITE_USE_MOCK` | `false` | `false` |
+`VITE_API_BASE_URL=https://arserviceco.com/applauseoneapi`
 
-Do not set the production variable to `/applauseoneapi`. That path only exists in local Vite; on Vercel a `POST` to it returns **405 Method Not Allowed**.
+The app reads this through `src/config/api.ts`. Set the same variable in Vercel if the Production build should override it.
+
+Swagger: https://arserviceco.com/applauseoneapi/docs/
 
 ## React + TypeScript + Vite
 

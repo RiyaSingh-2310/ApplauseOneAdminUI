@@ -1,4 +1,4 @@
-import { apiRequest, toSearch } from '@/lib/http'
+import { apiRequest, toSearch } from '@/lib/apiClient'
 import { mapRewardRequest, paginateRows, sortRows } from '@/lib/mappers'
 import type { PaginatedResult, RewardRequest, RewardRequestListQuery } from '@/types'
 import type { ApiRewardRequestListData } from '@/types/api'
