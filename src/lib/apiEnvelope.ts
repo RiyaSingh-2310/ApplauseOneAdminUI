@@ -13,11 +13,18 @@ const STATUS_FALLBACK: Record<number, string> = {
   403: 'You do not have permission to do that.',
   404: 'The requested record was not found.',
   409: 'This action conflicts with the current data.',
+  405: 'This request method is not allowed by the API.',
   422: 'Please check the highlighted fields and try again.',
   500: 'The server could not complete this request. Please try again.',
 }
 
-export function messageFromEnvelope(payload: ApiEnvelope | null, status: number, authRequest: boolean) {
+export function messageFromEnvelope(
+  payload: ApiEnvelope | null,
+  status: number,
+  authRequest: boolean,
+  method?: string,
+  url?: string,
+) {
   const fromFields = fieldMessages(payload?.errors)
   if (payload?.message) {
     return fromFields ? `${payload.message} ${fromFields}` : payload.message
@@ -27,6 +34,11 @@ export function messageFromEnvelope(payload: ApiEnvelope | null, status: number,
     return authRequest
       ? 'Your session has expired. Please sign in again.'
       : 'Invalid email or password.'
+  }
+  if (status === 405) {
+    const fallback = STATUS_FALLBACK[405]
+    if (import.meta.env.DEV && method && url) return `${fallback} (${method} ${url})`
+    return fallback
   }
   return STATUS_FALLBACK[status] ?? 'Something went wrong. Please try again.'
 }

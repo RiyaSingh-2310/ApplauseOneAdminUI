@@ -1,10 +1,11 @@
-import { env, isMockMode } from '@/lib/env'
+import { isMockMode, joinApiUrl } from '@/lib/env'
 import { ApiError } from '@/lib/errors'
 import { messageFromEnvelope, type ApiEnvelope } from '@/lib/apiEnvelope'
 import { clearSession, getAccessToken } from '@/lib/session'
 import { mockRequest } from '@/mocks/handlers'
 
 const UNAUTHORIZED_EVENT = 'ao:unauthorized'
+const REQUEST_TIMEOUT_MS = 20_000
 
 export function emitUnauthorized() {
   window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
@@ -34,6 +35,7 @@ export function toSearch(query: object = {}) {
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const method = options.method ?? 'GET'
   const authRequest = options.auth !== false
+  const url = joinApiUrl(path)
 
   if (isMockMode()) {
     return mockRequest<T>(method, path, options.body)
@@ -48,12 +50,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   let response: Response
   try {
-    response = await fetch(`${env.apiBaseUrl}${path}`, {
+    response = await fetch(url, {
       method,
       headers,
+      credentials: 'omit',
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
     })
-  } catch {
+  } catch (error) {
+    if (isTimeoutError(error)) {
+      throw new ApiError('The request timed out. Please try again.', 0)
+    }
     throw new ApiError('Unable to reach the server. Check your connection and try again.', 0)
   }
 
@@ -70,13 +77,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) {
-    throw new ApiError(messageFromEnvelope(payload, response.status, authRequest), response.status)
+    throw new ApiError(messageFromEnvelope(payload, response.status, authRequest, method, url), response.status)
   }
 
   if (payload && typeof payload === 'object' && 'data' in payload) {
     return payload.data as T
   }
   return payload as T
+}
+
+function isTimeoutError(error: unknown) {
+  return error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError')
 }
 
 async function readPayload(response: Response): Promise<ApiEnvelope | null> {

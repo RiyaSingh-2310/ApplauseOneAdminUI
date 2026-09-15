@@ -1,4 +1,20 @@
-# React + TypeScript + Vite
+# Applause One Admin UI
+
+Vite + React admin app. Production API: [ApplauseOne Swagger](https://arserviceco.com/applauseoneapi/docs/).
+
+## Environment
+
+Vite inlines `VITE_*` values **at build time**. Set these in `.env.development` locally and in Vercel → Project → Settings → Environment Variables for Production:
+
+| Variable | Local (`npm run dev`) | Vercel / `vite build` |
+|---|---|---|
+| `VITE_API_BASE_URL` | `/applauseoneapi` (Vite proxy) | `https://arserviceco.com/applauseoneapi` |
+| `VITE_USE_MOCK` | `false` | `false` |
+
+Do not set the production variable to `/applauseoneapi`. That path only exists in local Vite; on Vercel a `POST` to it returns **405 Method Not Allowed**.
+
+## React + TypeScript + Vite
+
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
