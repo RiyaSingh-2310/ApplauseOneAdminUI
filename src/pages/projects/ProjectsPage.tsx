@@ -250,7 +250,7 @@ export function ProjectsPage() {
                           Quota full
                         </DropdownMenuItem>
                       ) : null}
-                      {item.surveyUrl ? (
+                      {item.status === 'active' && item.surveyUrl ? (
                         <DropdownMenuItem asChild>
                           <a href={item.surveyUrl} target="_blank" rel="noreferrer">
                             Open URL

@@ -71,7 +71,6 @@ export function DateRangePicker({
 
   function handleSelect(range: DateRange | undefined) {
     if (!range) {
-      // DayPicker may clear when the start day is clicked again; treat that as a same-day range.
       if (draft?.from && !draft.to) {
         setDraft({ from: draft.from, to: draft.from })
         return
@@ -112,7 +111,7 @@ export function DateRangePicker({
   }
 
   return (
-    <div className="relative min-w-0">
+    <div className="relative min-w-0 w-full">
       <Popover
         open={open}
         onOpenChange={(nextOpen) => {
@@ -125,17 +124,18 @@ export function DateRangePicker({
             type="button"
             variant="outline"
             data-placeholder={!hasValue || undefined}
-            aria-label="Date range"
+            aria-label={hasValue ? label : 'Date range'}
+            title={hasValue ? label : undefined}
             className={cn(
-              'h-9 w-full min-w-0 justify-between border-input bg-transparent px-3 font-normal shadow-xs dark:bg-input/30 dark:hover:bg-input/50',
-              hasValue ? 'pr-8' : undefined,
+              // Override buttonVariants shrink-0 / whitespace-nowrap so long ranges stay inside the box.
+              'h-9 w-full min-w-0 max-w-full shrink overflow-hidden border-input bg-transparent px-3 font-normal whitespace-normal shadow-xs dark:bg-input/30 dark:hover:bg-input/50',
+              'inline-flex items-center justify-start gap-2',
+              hasValue ? 'pr-9' : undefined,
               !hasValue && 'text-muted-foreground',
             )}
           >
-            <span className="flex min-w-0 items-center gap-2">
-              <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
-              <span className="truncate">{label}</span>
-            </span>
+            <CalendarIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate text-left leading-none">{label}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -145,17 +145,17 @@ export function DateRangePicker({
           collisionPadding={16}
           className="z-[60] w-auto max-w-[calc(100vw-2rem)] overflow-auto p-0"
         >
-          <div className="flex flex-col gap-3 border-b p-3">
+          <div className="border-b p-3">
             <div className="grid min-w-0 grid-cols-2 gap-2 text-xs">
-              <div className="rounded-md border bg-background px-3 py-2">
-                <p className="text-muted-foreground">From</p>
-                <p className="truncate font-medium">
+              <div className="flex min-h-14 min-w-0 flex-col justify-center rounded-md border bg-background px-3 py-2">
+                <p className="leading-none text-muted-foreground">From</p>
+                <p className="mt-1.5 truncate leading-none font-medium">
                   {draft?.from ? formatDisplayDate(draft.from) : 'Select start'}
                 </p>
               </div>
-              <div className="rounded-md border bg-background px-3 py-2">
-                <p className="text-muted-foreground">To</p>
-                <p className="truncate font-medium">
+              <div className="flex min-h-14 min-w-0 flex-col justify-center rounded-md border bg-background px-3 py-2">
+                <p className="leading-none text-muted-foreground">To</p>
+                <p className="mt-1.5 truncate leading-none font-medium">
                   {draft?.to ? formatDisplayDate(draft.to) : 'Select end'}
                 </p>
               </div>
@@ -189,7 +189,7 @@ export function DateRangePicker({
           type="button"
           variant="ghost"
           size="icon-xs"
-          className="absolute top-1.5 right-1.5 z-10"
+          className="absolute top-1/2 right-1.5 z-10 -translate-y-1/2"
           onClick={(event) => clear(event)}
           aria-label="Clear date range"
         >

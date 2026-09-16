@@ -7,6 +7,7 @@ import { AssignmentStatusBadge, PanelistStatusBadge, VerificationBadge } from '@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { PointsInput } from '@/components/ui/points-input'
 import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
@@ -20,6 +21,7 @@ import { Field } from '@/components/shared/Field'
 import { useCreditPanelist, usePanelist } from '@/hooks/usePanelists'
 import { getErrorMessage } from '@/lib/errors'
 import { formatDate, formatNumber, formatPoints } from '@/lib/format'
+import { validatePoints } from '@/lib/validators'
 import {
   AGE_RANGE_LABELS,
   EDUCATION_LABELS,
@@ -44,6 +46,7 @@ export function PanelistDetailPage() {
   const [creditOpen, setCreditOpen] = useState(false)
   const [points, setPoints] = useState('100')
   const [remark, setRemark] = useState('Manual credit')
+  const [pointsError, setPointsError] = useState<string>()
   const credit = useCreditPanelist(() => setCreditOpen(false))
 
   if (detail.isLoading) return <LoadingSkeleton rows={6} />
@@ -242,8 +245,14 @@ export function PanelistDetailPage() {
             <DialogTitle>Credit points</DialogTitle>
             <DialogDescription>Manually add points to this panelist’s balance.</DialogDescription>
           </DialogHeader>
-          <Field label="Points">
-            <Input type="number" min={1} value={points} onChange={(event) => setPoints(event.target.value)} />
+          <Field label="Points" error={pointsError}>
+            <PointsInput
+              value={points}
+              onValueChange={(value) => {
+                setPoints(value)
+                setPointsError(undefined)
+              }}
+            />
           </Field>
           <Field label="Remark">
             <Input value={remark} onChange={(event) => setRemark(event.target.value)} />
@@ -254,7 +263,12 @@ export function PanelistDetailPage() {
             </Button>
             <Button
               disabled={credit.isPending}
-              onClick={() => credit.mutate({ id: panelist.id, points: Number(points), remark })}
+              onClick={() => {
+                const error = validatePoints(points)
+                setPointsError(error)
+                if (error || credit.isPending) return
+                credit.mutate({ id: panelist.id, points: Number(points), remark })
+              }}
             >
               {credit.isPending ? 'Crediting…' : 'Credit points'}
             </Button>

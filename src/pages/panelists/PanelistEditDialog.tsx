@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { required } from '@/lib/validators'
+import { required, sanitizePhoneInput, validateOptionalPhone } from '@/lib/validators'
 import type { Panelist, PanelistStatus, UpdatePanelistInput } from '@/types'
 
 export function PanelistEditDialog({
@@ -68,51 +68,60 @@ function PanelistEditForm({
       firstName: required(form.firstName, 'First name') ?? '',
       lastName: '',
       email: '',
+      phone: validateOptionalPhone(form.phone) ?? '',
     }
     setErrors(next)
     if (Object.values(next).some(Boolean)) return
-    onSubmit(form)
+    onSubmit({
+      ...form,
+      phone: form.phone.trim(),
+    })
   }
 
   return (
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Edit panelist</DialogTitle>
-          <DialogDescription>Update contact details and account status.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="First name" error={errors.firstName}>
-            <Input value={form.firstName} onChange={(event) => setForm({ ...form, firstName: event.target.value })} />
-          </Field>
-          <Field label="Last name" error={errors.lastName}>
-            <Input value={form.lastName} onChange={(event) => setForm({ ...form, lastName: event.target.value })} />
-          </Field>
-          <Field label="Email" className="sm:col-span-2" error={errors.email}>
-            <Input value={form.email} disabled />
-          </Field>
-          <Field label="Phone">
-            <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
-          </Field>
-          <Field label="Status" className="sm:col-span-2">
-            <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as PanelistStatus })}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={submit} disabled={pending}>
-            {pending ? 'Saving…' : 'Save changes'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+    <DialogContent className="sm:max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Edit panelist</DialogTitle>
+        <DialogDescription>Update contact details and account status.</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="First name" error={errors.firstName}>
+          <Input value={form.firstName} onChange={(event) => setForm({ ...form, firstName: event.target.value })} />
+        </Field>
+        <Field label="Last name" error={errors.lastName}>
+          <Input value={form.lastName} onChange={(event) => setForm({ ...form, lastName: event.target.value })} />
+        </Field>
+        <Field label="Email" className="sm:col-span-2" error={errors.email}>
+          <Input value={form.email} disabled />
+        </Field>
+        <Field label="Phone (optional)" error={errors.phone}>
+          <Input
+            inputMode="numeric"
+            autoComplete="tel"
+            value={form.phone}
+            onChange={(event) => setForm({ ...form, phone: sanitizePhoneInput(event.target.value) })}
+          />
+        </Field>
+        <Field label="Status" className="sm:col-span-2">
+          <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as PanelistStatus })}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>
+          Cancel
+        </Button>
+        <Button onClick={submit} disabled={pending}>
+          {pending ? 'Saving…' : 'Save changes'}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   )
 }

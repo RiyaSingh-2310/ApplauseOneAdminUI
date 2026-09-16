@@ -79,6 +79,17 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+
+  /* Hide native number spinners globally; typing remains allowed. */
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 @utility font-display {

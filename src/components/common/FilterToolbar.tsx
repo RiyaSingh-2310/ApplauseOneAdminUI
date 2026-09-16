@@ -20,21 +20,23 @@ export function FilterToolbar({
 }) {
   return (
     <>
-      <div className="flex flex-col gap-3 border-b px-4 py-4 lg:flex-row lg:items-center">
-        {search}
-        {renderFilters ? <div className="hidden min-w-0 flex-1 lg:block">{renderFilters()}</div> : null}
-        <div className="flex flex-wrap gap-2">
-          {renderFilters ? (
-            <Button variant="outline" className="lg:hidden" onClick={() => onMobileOpenChange(true)}>
-              <Filter className="size-4" />
-              Filters
+      <div className="flex flex-col gap-3 border-b px-4 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">{search}</div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {renderFilters ? (
+              <Button variant="outline" className="lg:hidden" onClick={() => onMobileOpenChange(true)}>
+                <Filter className="size-4" />
+                Filters
+              </Button>
+            ) : null}
+            <Button variant="outline" onClick={onClear}>
+              Clear filters
             </Button>
-          ) : null}
-          <Button variant="outline" onClick={onClear}>
-            Clear filters
-          </Button>
-          {children}
+            {children}
+          </div>
         </div>
+        {renderFilters ? <div className="hidden min-w-0 lg:block">{renderFilters()}</div> : null}
       </div>
       {renderFilters ? (
         <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>

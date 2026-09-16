@@ -5,8 +5,11 @@ import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { installNumberInputLock } from '@/lib/lockNumberInputs'
 import App from './App.tsx'
 import './index.css'
+
+installNumberInputLock()
 
 const queryClient = new QueryClient({
   defaultOptions: {

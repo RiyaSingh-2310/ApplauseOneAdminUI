@@ -38,7 +38,7 @@ export function RewardHistoryPage() {
 
   function renderFilters() {
     return (
-      <div className="grid gap-3 lg:grid-cols-4">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Select
           value={filters.panelistId ?? 'all'}
           onValueChange={(value) =>

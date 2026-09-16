@@ -15,13 +15,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { PointsInput } from '@/components/ui/points-input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { usePanelistList } from '@/hooks/usePanelists'
 import { formatNumber } from '@/lib/format'
 import { fullName, isAssignablePanelist } from '@/lib/labels'
-import { isValidUrl } from '@/lib/validators'
+import {
+  SURVEY_NAME_MAX_LENGTH,
+  validatePoints,
+  validateSurveyName,
+  validateSurveyUrl,
+} from '@/lib/validators'
 import type { AssignPanelistsInput, AssignmentSummary, SelectedPanelist } from '@/types'
 
 export function AssignPanelistsDialog({
@@ -62,6 +68,7 @@ function AssignPanelistsForm({
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Map<string, SelectedPanelist>>(new Map())
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [attempted, setAttempted] = useState(false)
   const debouncedSearch = useDebouncedValue(search)
   const list = usePanelistList({
     search: debouncedSearch,
@@ -85,6 +92,17 @@ function AssignPanelistsForm({
     }),
     [points, remark, selected, surveyName, surveyUrl],
   )
+
+  const validation = useMemo(() => {
+    return {
+      surveyName: validateSurveyName(surveyName) ?? '',
+      surveyUrl: validateSurveyUrl(surveyUrl) ?? '',
+      panelists: selected.size ? '' : 'Select at least one panelist.',
+      rewardPoints: validatePoints(rewardPoints, 'Reward points') ?? '',
+    }
+  }, [rewardPoints, selected.size, surveyName, surveyUrl])
+
+  const canReview = Object.values(validation).every((value) => !value)
 
   function toggle(panelist: SelectedPanelist, checked: boolean) {
     setSelected((current) => {
@@ -112,24 +130,14 @@ function AssignPanelistsForm({
   }
 
   function goToReview() {
-    const next = {
-      surveyName: surveyName.trim() ? '' : 'Enter a survey or project name.',
-      surveyUrl: !surveyUrl.trim()
-        ? 'Enter a survey URL.'
-        : isValidUrl(surveyUrl.trim())
-          ? ''
-          : 'Enter a valid http(s) URL.',
-      panelists: selected.size ? '' : 'Select at least one panelist.',
-      rewardPoints:
-        Number.isInteger(points) && points > 0 ? '' : 'Enter a positive whole number of reward points.',
-    }
-    setErrors(next)
-    if (Object.values(next).some(Boolean)) return
+    setAttempted(true)
+    setErrors(validation)
+    if (!canReview) return
     setStep('review')
   }
 
   function submit() {
-    if (pending) return
+    if (pending || !canReview) return
     onSubmit({
       surveyName: summary.surveyName,
       surveyUrl: summary.surveyUrl,
@@ -141,6 +149,7 @@ function AssignPanelistsForm({
 
   const pageIds = rows.map((item) => item.id)
   const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id))
+  const show = (key: keyof typeof validation) => (attempted ? errors[key] || validation[key] : undefined)
 
   return (
     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
@@ -156,17 +165,18 @@ function AssignPanelistsForm({
       {step === 'select' ? (
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Survey / project name" className="sm:col-span-2" error={errors.surveyName}>
+            <Field label="Survey / project name" className="sm:col-span-2" error={show('surveyName')}>
               <Input
                 value={surveyName}
+                maxLength={SURVEY_NAME_MAX_LENGTH}
                 placeholder="e.g. Brand feedback Q3"
-                onChange={(event) => setSurveyName(event.target.value)}
+                onChange={(event) => setSurveyName(event.target.value.slice(0, SURVEY_NAME_MAX_LENGTH))}
               />
             </Field>
             <Field
               label="Survey URL"
               className="sm:col-span-2"
-              error={errors.surveyUrl}
+              error={show('surveyUrl')}
               hint="Use {panelist_id} in the URL if the survey vendor should receive the panelist id."
             >
               <Input
@@ -175,17 +185,13 @@ function AssignPanelistsForm({
                 onChange={(event) => setSurveyUrl(event.target.value)}
               />
             </Field>
-            <Field label="Reward points per panelist" error={errors.rewardPoints}>
-              <Input
-                type="number"
-                min={1}
-                step={1}
-                value={rewardPoints}
-                onChange={(event) => setRewardPoints(event.target.value)}
-              />
+            <Field label="Reward points per panelist" error={show('rewardPoints')}>
+              <PointsInput value={rewardPoints} onValueChange={setRewardPoints} />
             </Field>
-            <div className="flex items-end text-sm text-muted-foreground">
-              {selected.size} selected · {formatNumber(summary.totalRewardPoints)} pts total
+            <div className="flex min-h-9 items-center justify-start text-sm text-muted-foreground sm:justify-end sm:pt-6">
+              <span className="tabular-nums">
+                {selected.size} selected · {formatNumber(summary.totalRewardPoints)} pts total
+              </span>
             </div>
             <Field label="Remark (optional)" className="sm:col-span-2">
               <Textarea
@@ -205,7 +211,7 @@ function AssignPanelistsForm({
             placeholder="Search panelists by name or email"
             searching={search !== debouncedSearch}
           />
-          {errors.panelists ? <p className="text-xs text-destructive">{errors.panelists}</p> : null}
+          {show('panelists') ? <p className="text-xs text-destructive">{show('panelists')}</p> : null}
 
           {list.isLoading ? (
             <LoadingSkeleton rows={4} />
@@ -338,9 +344,11 @@ function AssignPanelistsForm({
           </Button>
         )}
         {step === 'select' ? (
-          <Button onClick={goToReview}>Review assignment</Button>
+          <Button onClick={goToReview} disabled={!canReview}>
+            Review assignment
+          </Button>
         ) : (
-          <Button onClick={submit} disabled={pending}>
+          <Button onClick={submit} disabled={pending || !canReview}>
             {pending ? 'Assigning…' : 'Assign panelists'}
           </Button>
         )}

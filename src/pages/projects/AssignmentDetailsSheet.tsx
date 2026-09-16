@@ -103,7 +103,7 @@ export function AssignmentDetailsSheet({
               </p>
             ) : null}
             <div className="flex flex-wrap gap-2 pt-2">
-              {assignment.surveyUrl ? (
+              {assignment.status === 'active' && assignment.surveyUrl ? (
                 <Button asChild variant="outline">
                   <a href={assignment.surveyUrl} target="_blank" rel="noreferrer">
                     Open survey

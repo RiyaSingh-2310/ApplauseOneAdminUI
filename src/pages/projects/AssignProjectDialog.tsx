@@ -10,15 +10,21 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { PointsInput } from '@/components/ui/points-input'
 import { Textarea } from '@/components/ui/textarea'
-import { isValidUrl, required } from '@/lib/validators'
+import {
+  SURVEY_NAME_MAX_LENGTH,
+  validatePoints,
+  validateSurveyName,
+  validateSurveyUrl,
+} from '@/lib/validators'
 import type { ProjectAssignment, UpdateSurveyInput } from '@/types'
 
-function toForm(assignment: ProjectAssignment): UpdateSurveyInput & { surveyName: string; surveyUrl: string; rewardPoints: number; remark: string } {
+function toForm(assignment: ProjectAssignment) {
   return {
     surveyName: assignment.projectName,
     surveyUrl: assignment.surveyUrl,
-    rewardPoints: assignment.rewardPoints,
+    rewardPoints: String(assignment.rewardPoints),
     remark: assignment.remark ?? '',
   }
 }
@@ -68,21 +74,16 @@ function EditSurveyForm({
   function submit() {
     if (pending) return
     const next = {
-      surveyName: required(form.surveyName, 'Survey name') ?? '',
-      surveyUrl:
-        required(form.surveyUrl, 'Survey URL') ??
-        (!isValidUrl(form.surveyUrl) ? 'Enter a valid http(s) URL.' : ''),
-      rewardPoints:
-        Number.isInteger(form.rewardPoints) && form.rewardPoints > 0
-          ? ''
-          : 'Enter a positive whole number of reward points.',
+      surveyName: validateSurveyName(form.surveyName) ?? '',
+      surveyUrl: validateSurveyUrl(form.surveyUrl) ?? '',
+      rewardPoints: validatePoints(form.rewardPoints, 'Reward points') ?? '',
     }
     setErrors(next)
     if (Object.values(next).some(Boolean)) return
     onSubmit({
       surveyName: form.surveyName.trim(),
       surveyUrl: form.surveyUrl.trim(),
-      rewardPoints: form.rewardPoints,
+      rewardPoints: Number(form.rewardPoints),
       remark: form.remark.trim(),
     })
   }
@@ -97,18 +98,21 @@ function EditSurveyForm({
       </DialogHeader>
       <div className="grid gap-3">
         <Field label="Survey / project name" error={errors.surveyName}>
-          <Input value={form.surveyName} onChange={(event) => setForm({ ...form, surveyName: event.target.value })} />
+          <Input
+            value={form.surveyName}
+            maxLength={SURVEY_NAME_MAX_LENGTH}
+            onChange={(event) =>
+              setForm({ ...form, surveyName: event.target.value.slice(0, SURVEY_NAME_MAX_LENGTH) })
+            }
+          />
         </Field>
         <Field label="Survey URL" error={errors.surveyUrl}>
           <Input value={form.surveyUrl} onChange={(event) => setForm({ ...form, surveyUrl: event.target.value })} />
         </Field>
         <Field label="Reward points" error={errors.rewardPoints}>
-          <Input
-            type="number"
-            min={1}
-            step={1}
+          <PointsInput
             value={form.rewardPoints}
-            onChange={(event) => setForm({ ...form, rewardPoints: Number(event.target.value) })}
+            onValueChange={(value) => setForm({ ...form, rewardPoints: value })}
           />
         </Field>
         <Field label="Remark (optional)">

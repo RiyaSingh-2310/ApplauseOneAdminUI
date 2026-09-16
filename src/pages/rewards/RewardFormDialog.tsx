@@ -10,10 +10,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { PointsInput } from '@/components/ui/points-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useRewardTypes } from '@/hooks/useRewards'
-import { required } from '@/lib/validators'
+import { required, validateNonNegativePoints } from '@/lib/validators'
 import type { Reward, RewardAvailability, RewardInput, RewardStatus } from '@/types'
 
 const empty: RewardInput = {
@@ -96,6 +97,7 @@ function RewardForm({
       name: required(form.name, 'Reward name') ?? '',
       type: required(type, 'Reward type') ?? '',
       provider: required(form.provider, 'Provider') ?? '',
+      pointsRequired: validateNonNegativePoints(form.pointsRequired, 'Points required') ?? '',
     }
     setErrors(next)
     if (Object.values(next).some(Boolean)) return
@@ -148,12 +150,12 @@ function RewardForm({
               onChange={(event) => setForm({ ...form, processingTime: event.target.value })}
             />
           </Field>
-          <Field label="Points required">
-            <Input
-              type="number"
-              min={0}
+          <Field label="Points required" error={errors.pointsRequired}>
+            <PointsInput
               value={form.pointsRequired}
-              onChange={(event) => setForm({ ...form, pointsRequired: Number(event.target.value) })}
+              onValueChange={(value) =>
+                setForm({ ...form, pointsRequired: value ? Number(value) : 0 })
+              }
             />
           </Field>
           <Field label="Cash value">
