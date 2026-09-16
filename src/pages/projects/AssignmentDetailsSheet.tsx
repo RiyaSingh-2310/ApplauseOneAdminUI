@@ -1,25 +1,51 @@
 import { ExternalLink } from 'lucide-react'
 import { AssignmentStatusBadge, SurveyRewardBadge } from '@/components/shared/StatusBadge'
+import { ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { useSurveyAssignment } from '@/hooks/useProjects'
 import { formatDate, formatDateTime, formatNumber } from '@/lib/format'
 import type { ProjectAssignment } from '@/types'
 
 export function AssignmentDetailsSheet({
-  assignment,
+  assignmentId,
   onOpenChange,
+  onMarkComplete,
+  completePending = false,
 }: {
-  assignment: ProjectAssignment | null
+  assignmentId: string | null
   onOpenChange: (open: boolean) => void
+  onMarkComplete?: (assignment: ProjectAssignment) => void
+  completePending?: boolean
 }) {
+  const detail = useSurveyAssignment(assignmentId ?? '')
+  const assignment = detail.data
+
   return (
-    <Sheet open={Boolean(assignment)} onOpenChange={onOpenChange}>
+    <Sheet open={Boolean(assignmentId)} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{assignment?.projectName ?? 'Assignment'}</SheetTitle>
         </SheetHeader>
-        {assignment ? (
+        {detail.isLoading ? (
+          <div className="p-4">
+            <LoadingSkeleton rows={6} />
+          </div>
+        ) : detail.isError ? (
+          <div className="p-4">
+            <ErrorState message="Unable to load this assignment." onRetry={() => detail.refetch()} />
+          </div>
+        ) : assignment ? (
           <div className="space-y-3 p-4 text-sm">
+            <p>
+              <span className="text-muted-foreground">Survey ID:</span> {assignment.id}
+            </p>
+            <p>
+              <span className="text-muted-foreground">Survey name:</span> {assignment.projectName}
+            </p>
+            <p className="break-all">
+              <span className="text-muted-foreground">Survey URL:</span> {assignment.surveyUrl}
+            </p>
             <p>
               <span className="text-muted-foreground">Panelist:</span> {assignment.panelistName}
             </p>
@@ -28,15 +54,9 @@ export function AssignmentDetailsSheet({
             </p>
             {assignment.panelistEmail ? (
               <p>
-                <span className="text-muted-foreground">Email:</span> {assignment.panelistEmail}
+                <span className="text-muted-foreground">Panelist email:</span> {assignment.panelistEmail}
               </p>
             ) : null}
-            <p>
-              <span className="text-muted-foreground">Assignment ID:</span> {assignment.id}
-            </p>
-            <p className="break-all">
-              <span className="text-muted-foreground">Survey URL:</span> {assignment.surveyUrl}
-            </p>
             <p>
               <span className="text-muted-foreground">Assigned:</span> {formatDateTime(assignment.assignedAt)}
             </p>
@@ -46,16 +66,22 @@ export function AssignmentDetailsSheet({
               </p>
             ) : null}
             <p className="flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground">Assignment status:</span>
+              <span className="text-muted-foreground">Status:</span>
               <AssignmentStatusBadge status={assignment.status} />
             </p>
             <p className="flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground">Reward status:</span>
+              <span className="text-muted-foreground">Survey reward:</span>
               <SurveyRewardBadge status={assignment.status} />
             </p>
             <p>
               <span className="text-muted-foreground">Reward points:</span> {formatNumber(assignment.rewardPoints)}
             </p>
+            {assignment.status === 'complete' ? (
+              <p className="text-xs text-muted-foreground">
+                Completing this assignment credits the survey reward once. Transaction details are stored by the
+                backend and are not returned on this assignment record.
+              </p>
+            ) : null}
             {assignment.remark ? (
               <p>
                 <span className="text-muted-foreground">Remark:</span> {assignment.remark}
@@ -76,14 +102,24 @@ export function AssignmentDetailsSheet({
                 <span className="text-muted-foreground">Updated:</span> {formatDate(assignment.updatedAt)}
               </p>
             ) : null}
-            {assignment.surveyUrl ? (
-              <Button asChild variant="outline">
-                <a href={assignment.surveyUrl} target="_blank" rel="noreferrer">
-                  Open survey
-                  <ExternalLink className="size-4" />
-                </a>
-              </Button>
-            ) : null}
+            <div className="flex flex-wrap gap-2 pt-2">
+              {assignment.surveyUrl ? (
+                <Button asChild variant="outline">
+                  <a href={assignment.surveyUrl} target="_blank" rel="noreferrer">
+                    Open survey
+                    <ExternalLink className="size-4" />
+                  </a>
+                </Button>
+              ) : null}
+              {assignment.status === 'active' && onMarkComplete ? (
+                <Button
+                  disabled={completePending}
+                  onClick={() => !completePending && onMarkComplete(assignment)}
+                >
+                  Mark completed
+                </Button>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </SheetContent>

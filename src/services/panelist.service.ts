@@ -27,8 +27,7 @@ export const panelistService = {
       (query.gender && query.gender !== 'all') ||
         (query.ageRange && query.ageRange !== 'all') ||
         query.registeredFrom ||
-        query.registeredTo ||
-        query.status === 'pending',
+        query.registeredTo,
     )
 
     if (extraFilters) {
@@ -85,7 +84,6 @@ export const panelistService = {
         name: joinName(input.firstName, input.lastName),
         phone: input.phone,
         status: input.status === 'inactive' ? 'inactive' : 'active',
-        is_verified: input.status === 'pending' ? 0 : 1,
       },
     })
     return panelistService.get(id)
@@ -93,7 +91,7 @@ export const panelistService = {
   async activate(id: string) {
     await apiRequest(`/admin/panelists/${id}`, {
       method: 'PUT',
-      body: { status: 'active', is_verified: 1 },
+      body: { status: 'active' },
     })
     return panelistService.get(id)
   },

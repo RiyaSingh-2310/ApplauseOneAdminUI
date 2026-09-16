@@ -45,6 +45,10 @@ export function PanelistStatusBadge({ status }: { status: PanelistStatus }) {
   return <ToneBadge tone={tone}>{PANELIST_STATUS_LABELS[status]}</ToneBadge>
 }
 
+export function VerificationBadge({ verified }: { verified: boolean }) {
+  return <ToneBadge tone={verified ? 'success' : 'warning'}>{verified ? 'Verified' : 'Unverified'}</ToneBadge>
+}
+
 export function AssignmentStatusBadge({ status }: { status: AssignmentStatus }) {
   const tone =
     status === 'complete'
@@ -59,7 +63,7 @@ export function AssignmentStatusBadge({ status }: { status: AssignmentStatus }) 
 
 export function SurveyRewardBadge({ status }: { status: AssignmentStatus }) {
   const issued = status === 'complete'
-  return <ToneBadge tone={issued ? 'success' : 'muted'}>{issued ? 'Issued' : 'Not issued'}</ToneBadge>
+  return <ToneBadge tone={issued ? 'success' : 'muted'}>{issued ? 'Credited' : 'Not credited'}</ToneBadge>
 }
 
 export function CompletionStatusBadge({ status }: { status: CompletionStatus }) {

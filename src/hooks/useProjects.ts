@@ -11,6 +11,14 @@ export function useProjectList(query: ProjectListQuery) {
   })
 }
 
+export function useSurveyAssignment(id: string) {
+  return useQuery({
+    queryKey: queryKeys.project(id),
+    queryFn: () => projectService.get(id),
+    enabled: Boolean(id),
+  })
+}
+
 function invalidateProjects(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: ['projects'] })
   void queryClient.invalidateQueries({ queryKey: ['panelists'] })
@@ -51,7 +59,7 @@ export function useCompleteAssignment(onSuccess?: () => void) {
   return useMutation({
     mutationFn: (id: string) => projectService.complete(id),
     onSuccess: () => {
-      notify.success('Assignment marked complete. Reward points were credited.')
+      notify.success('Survey marked complete. The survey reward was credited once.')
       invalidateProjects(queryClient)
       onSuccess?.()
     },

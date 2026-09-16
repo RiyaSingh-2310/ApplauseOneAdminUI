@@ -76,9 +76,10 @@ function buildPanelists(): Panelist[] {
     const educations = ['high_school', 'some_college', 'bachelors', 'masters', 'doctorate'] as const
     const employments = ['full_time', 'part_time', 'self_employed', 'unemployed', 'student', 'retired'] as const
     const incomes = ['under_25k', '25k_49k', '50k_74k', '75k_99k', '100k_149k', '150k_plus'] as const
-    const statuses = ['active', 'active', 'active', 'pending', 'inactive'] as const
+    const statuses = ['active', 'active', 'active', 'inactive', 'inactive'] as const
     const points = 180 + index * 95
     const redeemed = Math.round(points * (0.35 + (index % 4) * 0.08))
+    const status = index === 0 ? 'active' : statuses[index % statuses.length]
 
     return {
       id: `pnl_${1001 + index}`,
@@ -97,7 +98,12 @@ function buildPanelists(): Panelist[] {
       employment: employments[index % employments.length],
       householdIncome: incomes[index % incomes.length],
       householdSize: 1 + (index % 5),
-      status: index === 0 ? 'active' : statuses[index % statuses.length],
+      status,
+      isVerified: status === 'active',
+      onboardingStep: index % 6,
+      onboardingCompletedAt: index % 3 === 0 ? daysAgo(1 + index, 9) : '',
+      updatedAt: daysAgo(index, 9),
+      photo: '',
       rewardPoints: points - redeemed,
       redeemedPoints: redeemed,
       pendingPoints: index % 5 === 0 ? 500 : 0,

@@ -36,7 +36,7 @@ export function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <KpiCard label="Total Panelists" value={formatNumber(data.totalPanelists)} hint="All registered members" icon={Users} />
           <KpiCard label="New Registrations" value={formatNumber(data.newRegistrations)} hint="Last 30 days" icon={UserPlus} />
-          <KpiCard label="Active Panelists" value={formatNumber(data.activePanelists)} hint="Eligible for assignment" icon={Users} />
+          <KpiCard label="Active Panelists" value={formatNumber(data.activePanelists)} hint="Verified and active" icon={Users} />
           <KpiCard
             label="Pending Reward Requests"
             value={formatNumber(data.pendingRewardRequests)}

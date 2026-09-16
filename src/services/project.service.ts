@@ -78,10 +78,11 @@ export const projectService = {
     }
 
     const body: ApiSurveyCreateInput = {
-      panelist_ids: panelistIds,
       survey_url: surveyUrl,
       reward_points: input.rewardPoints,
     }
+    if (panelistIds.length === 1) body.panelist_id = panelistIds[0]
+    else body.panelist_ids = panelistIds
     const surveyName = input.surveyName.trim()
     if (surveyName) body.survey_name = surveyName
     const remark = input.remark?.trim()

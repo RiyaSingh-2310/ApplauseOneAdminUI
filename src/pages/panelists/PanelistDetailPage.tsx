@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { AssignmentStatusBadge, PanelistStatusBadge } from '@/components/shared/StatusBadge'
+import { AssignmentStatusBadge, PanelistStatusBadge, VerificationBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -80,7 +80,8 @@ export function PanelistDetailPage() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <PanelistStatusBadge status={panelist.status} />
-        <span className="text-sm text-muted-foreground">Member since {formatDate(panelist.registeredAt)}</span>
+        <VerificationBadge verified={panelist.isVerified} />
+        <span className="text-sm text-muted-foreground">Registered {formatDate(panelist.registeredAt)}</span>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -89,10 +90,34 @@ export function PanelistDetailPage() {
             <CardTitle className="font-display text-xl">Personal information</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Info label="Name" value={name} />
+            {panelist.photo ? (
+              <div className="sm:col-span-2">
+                <img src={panelist.photo} alt="" className="size-16 rounded-full object-cover" />
+              </div>
+            ) : null}
+            <Info label="Name" value={name || '—'} />
+            <Info label="Panelist ID" value={panelist.id} />
             <Info label="Email" value={panelist.email} />
             <Info label="Phone" value={panelist.phone || '—'} />
-            <Info label="Verified" value={panelist.status === 'pending' ? 'No' : 'Yes'} />
+            <div>
+              <p className="text-xs tracking-wide text-muted-foreground uppercase">Account status</p>
+              <div className="mt-1">
+                <PanelistStatusBadge status={panelist.status} />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs tracking-wide text-muted-foreground uppercase">Verification</p>
+              <div className="mt-1">
+                <VerificationBadge verified={panelist.isVerified} />
+              </div>
+            </div>
+            <Info label="Onboarding step" value={panelist.onboardingStep} />
+            <Info
+              label="Onboarding completed"
+              value={panelist.onboardingCompletedAt ? formatDate(panelist.onboardingCompletedAt) : '—'}
+            />
+            <Info label="Registered" value={formatDate(panelist.registeredAt)} />
+            <Info label="Last updated" value={panelist.updatedAt ? formatDate(panelist.updatedAt) : '—'} />
           </CardContent>
           <Separator />
           <CardHeader>
@@ -168,6 +193,7 @@ export function PanelistDetailPage() {
                   <p className="font-medium">{assignment.projectName}</p>
                   <p className="text-xs text-muted-foreground">
                     Assigned {formatDate(assignment.assignedAt)} · {formatPoints(assignment.rewardPoints)}
+                    {assignment.completedAt ? ` · Completed ${formatDate(assignment.completedAt)}` : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

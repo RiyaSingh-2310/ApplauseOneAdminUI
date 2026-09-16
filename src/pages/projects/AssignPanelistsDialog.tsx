@@ -3,6 +3,7 @@ import { SearchField } from '@/components/common/SearchField'
 import { Field } from '@/components/shared/Field'
 import { PaginationBar } from '@/components/shared/PaginationBar'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
+import { PanelistStatusBadge, VerificationBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -19,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { usePanelistList } from '@/hooks/usePanelists'
 import { formatNumber } from '@/lib/format'
-import { fullName } from '@/lib/labels'
+import { fullName, isAssignablePanelist } from '@/lib/labels'
 import { isValidUrl } from '@/lib/validators'
 import type { AssignPanelistsInput, AssignmentSummary, SelectedPanelist } from '@/types'
 
@@ -70,7 +71,7 @@ function AssignPanelistsForm({
     sortBy: 'registeredAt',
     sortDir: 'desc',
   })
-  const rows = list.data?.data ?? []
+  const rows = (list.data?.data ?? []).filter(isAssignablePanelist)
   const points = Number(rewardPoints)
   const summary = useMemo<AssignmentSummary>(
     () => ({
@@ -147,7 +148,7 @@ function AssignPanelistsForm({
         <DialogTitle>{step === 'select' ? 'Assign panelists' : 'Review assignment'}</DialogTitle>
         <DialogDescription>
           {step === 'select'
-            ? 'Choose live panelists, a survey URL, and reward points. Completing an assignment later credits points once.'
+            ? 'Choose verified, active panelists, a survey URL, and reward points. Completing an assignment later credits the survey reward once.'
             : 'Confirm the assignment before it is sent to the Admin survey API.'}
         </DialogDescription>
       </DialogHeader>
@@ -211,7 +212,10 @@ function AssignPanelistsForm({
           ) : list.isError ? (
             <ErrorState message="Unable to load panelists." onRetry={() => list.refetch()} />
           ) : rows.length === 0 ? (
-            <EmptyState title="No panelists found." description="Try a different search." />
+            <EmptyState
+              title="No eligible panelists found."
+              description="Only verified, active panelists can be assigned. Unverified accounts must activate from the email link first."
+            />
           ) : (
             <div className="overflow-hidden rounded-2xl border">
               <div className="flex items-center gap-3 border-b bg-secondary/40 px-4 py-2 text-sm">
@@ -238,6 +242,10 @@ function AssignPanelistsForm({
                         <span className="mt-0.5 block text-xs text-muted-foreground">
                           ID {panelist.id} · {panelist.email}
                         </span>
+                        <span className="mt-1 flex flex-wrap gap-1">
+                          <PanelistStatusBadge status={panelist.status} />
+                          <VerificationBadge verified={panelist.isVerified} />
+                        </span>
                       </span>
                     </label>
                   )
@@ -260,6 +268,9 @@ function AssignPanelistsForm({
                       <span className="min-w-0 flex-1 font-medium">{name}</span>
                       <span className="hidden text-muted-foreground sm:inline">ID {panelist.id}</span>
                       <span className="truncate text-xs text-muted-foreground">{panelist.email}</span>
+                      <span className="hidden lg:flex items-center gap-1">
+                        <VerificationBadge verified={panelist.isVerified} />
+                      </span>
                     </label>
                   )
                 })}

@@ -48,6 +48,11 @@ export interface Panelist {
   householdIncome?: HouseholdIncome
   householdSize?: number
   status: PanelistStatus
+  isVerified: boolean
+  onboardingStep: number
+  onboardingCompletedAt: string
+  updatedAt: string
+  photo: string
   rewardPoints: number
   redeemedPoints: number
   pendingPoints: number

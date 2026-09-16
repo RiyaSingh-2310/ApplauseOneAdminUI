@@ -10,6 +10,7 @@ import { SortableHeader } from '@/components/shared/SortableHeader'
 import { AssignmentStatusBadge, SurveyRewardBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useListQuery } from '@/hooks/useListQuery'
@@ -42,7 +43,7 @@ export function ProjectsPage() {
   const list = useProjectList(query)
   const [filterOpen, setFilterOpen] = useState(false)
   const [assignOpen, setAssignOpen] = useState(false)
-  const [viewing, setViewing] = useState<ProjectAssignment | null>(null)
+  const [viewingId, setViewingId] = useState<string | null>(null)
   const [editing, setEditing] = useState<ProjectAssignment | null>(null)
   const [completing, setCompleting] = useState<ProjectAssignment | null>(null)
   const [statusChange, setStatusChange] = useState<{
@@ -61,24 +62,39 @@ export function ProjectsPage() {
 
   function renderFilters() {
     return (
-      <Select
-        value={filters.status ?? 'all'}
-        onValueChange={(value) =>
-          setFilters((current) => ({ ...current, page: 1, status: value as AssignmentStatus | 'all' }))
-        }
-      >
-        <SelectTrigger className="w-full lg:w-48">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
-          {Object.entries(ASSIGNMENT_STATUS_LABELS).map(([value, label]) => (
-            <SelectItem key={value} value={value}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Select
+          value={filters.status ?? 'all'}
+          onValueChange={(value) =>
+            setFilters((current) => ({ ...current, page: 1, status: value as AssignmentStatus | 'all' }))
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {Object.entries(ASSIGNMENT_STATUS_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          inputMode="numeric"
+          placeholder="Panelist ID"
+          aria-label="Filter by panelist ID"
+          value={filters.panelistId ?? ''}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              page: 1,
+              panelistId: event.target.value.trim() || undefined,
+            }))
+          }
+        />
+      </div>
     )
   }
 
@@ -138,13 +154,13 @@ export function ProjectsPage() {
               key={item.id}
               type="button"
               className="w-full rounded-2xl border px-4 py-3 text-left"
-              onClick={() => setViewing(item)}
+              onClick={() => setViewingId(item.id)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-medium">{item.projectName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {item.panelistName} · ID {item.panelistId}
+                    {item.panelistName} · {item.panelistEmail || `ID ${item.panelistId}`}
                   </p>
                 </div>
                 <AssignmentStatusBadge status={item.status} />
@@ -170,9 +186,10 @@ export function ProjectsPage() {
                 </TableHead>
                 <TableHead>Panelist</TableHead>
                 <TableHead>Panelist ID</TableHead>
-                <TableHead>Assignment status</TableHead>
+                <TableHead className="hidden lg:table-cell">Survey URL</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Reward points</TableHead>
-                <TableHead>Reward status</TableHead>
+                <TableHead>Survey reward</TableHead>
                 <TableHead>Assigned date</TableHead>
                 <TableHead>Completed date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -189,6 +206,9 @@ export function ProjectsPage() {
                     </div>
                   </TableCell>
                   <TableCell>{item.panelistId}</TableCell>
+                  <TableCell className="hidden max-w-[220px] truncate lg:table-cell" title={item.surveyUrl}>
+                    {item.surveyUrl}
+                  </TableCell>
                   <TableCell>
                     <AssignmentStatusBadge status={item.status} />
                   </TableCell>
@@ -200,7 +220,7 @@ export function ProjectsPage() {
                   <TableCell>{item.completedAt ? formatDate(item.completedAt) : '—'}</TableCell>
                   <TableCell className="text-right">
                     <RowActions>
-                      <DropdownMenuItem onClick={() => setViewing(item)}>View</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setViewingId(item.id)}>View</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setEditing(item)}>Edit</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setAssignOpen(true)}>Assign</DropdownMenuItem>
                       {item.status === 'active' ? (
@@ -212,7 +232,7 @@ export function ProjectsPage() {
                         </DropdownMenuItem>
                       ) : null}
                       {item.status === 'complete' ? (
-                        <DropdownMenuItem onClick={() => setViewing(item)}>View reward details</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setViewingId(item.id)}>View reward details</DropdownMenuItem>
                       ) : null}
                       {item.status === 'active' ? (
                         <DropdownMenuItem
@@ -248,7 +268,15 @@ export function ProjectsPage() {
         </div>
       </DataTable>
 
-      <AssignmentDetailsSheet assignment={viewing} onOpenChange={(open) => !open && setViewing(null)} />
+      <AssignmentDetailsSheet
+        assignmentId={viewingId}
+        completePending={completeBusy}
+        onOpenChange={(open) => !open && setViewingId(null)}
+        onMarkComplete={(assignment) => {
+          if (completeBusy || assignment.status !== 'active') return
+          setCompleting(assignment)
+        }}
+      />
 
       <AssignPanelistsDialog
         open={assignOpen}
@@ -271,16 +299,27 @@ export function ProjectsPage() {
       <ConfirmDialog
         open={Boolean(completing)}
         onOpenChange={(open) => !open && setCompleting(null)}
-        title="Mark this assignment complete?"
+        title="Mark this survey completed?"
         description={
-          completing
-            ? `${completing.panelistName} (ID ${completing.panelistId}) · ${completing.projectName} · ${formatNumber(completing.rewardPoints)} points. This will credit ${formatNumber(completing.rewardPoints)} reward points to the panelist. Points are issued only once.`
-            : undefined
+          completing ? (
+            <>
+              <span className="block">Panelist: {completing.panelistName}</span>
+              <span className="block">Email: {completing.panelistEmail || '—'}</span>
+              <span className="block">Survey: {completing.projectName}</span>
+              <span className="block">Survey ID: {completing.id}</span>
+              <span className="block">Current status: {ASSIGNMENT_STATUS_LABELS[completing.status]}</span>
+              <span className="block">Reward points: {formatNumber(completing.rewardPoints)}</span>
+              <span className="mt-2 block">
+                Marking this survey as completed will trigger the configured survey reward. The reward is credited
+                once by the completion API and is not sent as a separate credit.
+              </span>
+            </>
+          ) : undefined
         }
         confirmLabel="Mark completed"
         pending={completeBusy}
         onConfirm={() => {
-          if (!completing || completeBusy) return
+          if (!completing || completeBusy || completing.status !== 'active') return
           complete.mutate(completing.id)
         }}
       />
@@ -308,7 +347,11 @@ export function ProjectsPage() {
         open={Boolean(removing)}
         onOpenChange={(open) => !open && setRemoving(null)}
         title="Remove this assignment?"
-        description="The survey will no longer appear for this panelist."
+        description={
+          removing
+            ? `${removing.projectName} for ${removing.panelistName} (survey ID ${removing.id}) will be removed.`
+            : 'This survey assignment will be removed.'
+        }
         confirmLabel="Remove"
         destructive
         pending={remove.isPending}

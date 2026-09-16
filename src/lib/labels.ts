@@ -93,3 +93,7 @@ export const REQUEST_STATUS_LABELS: Record<RewardRequestStatus, string> = {
 export function fullName(firstName: string, lastName: string) {
   return [firstName, lastName].filter(Boolean).join(' ')
 }
+
+export function isAssignablePanelist(panelist: { status: PanelistStatus; isVerified: boolean }) {
+  return panelist.status === 'active' && panelist.isVerified
+}

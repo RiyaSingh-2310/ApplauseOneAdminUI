@@ -7,7 +7,7 @@ import { SearchField } from '@/components/common/SearchField'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SortableHeader } from '@/components/shared/SortableHeader'
-import { PanelistStatusBadge } from '@/components/shared/StatusBadge'
+import { PanelistStatusBadge, VerificationBadge } from '@/components/shared/StatusBadge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -59,7 +59,9 @@ export function PanelistsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            {Object.entries(PANELIST_STATUS_LABELS).map(([value, label]) => (
+            {Object.entries(PANELIST_STATUS_LABELS)
+              .filter(([value]) => value !== 'pending')
+              .map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
               </SelectItem>
@@ -174,7 +176,10 @@ export function PanelistsPage() {
                   </Link>
                   <p className="text-xs text-muted-foreground">{panelist.email}</p>
                 </div>
-                <PanelistStatusBadge status={panelist.status} />
+                <div className="flex flex-col items-end gap-1">
+                  <PanelistStatusBadge status={panelist.status} />
+                  <VerificationBadge verified={panelist.isVerified} />
+                </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                   {formatDate(panelist.registeredAt)} · {formatNumber(panelist.rewardPoints)} pts
@@ -201,7 +206,8 @@ export function PanelistsPage() {
                   onSort={sort}
                 />
               </TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Account status</TableHead>
+              <TableHead>Verification</TableHead>
               <TableHead>
                 <SortableHeader
                   label="Reward Points"
@@ -229,6 +235,9 @@ export function PanelistsPage() {
                 <TableCell>{formatDate(panelist.registeredAt)}</TableCell>
                 <TableCell>
                   <PanelistStatusBadge status={panelist.status} />
+                </TableCell>
+                <TableCell>
+                  <VerificationBadge verified={panelist.isVerified} />
                 </TableCell>
                 <TableCell>{formatNumber(panelist.rewardPoints)}</TableCell>
                 <TableCell>{panelist.assignedProjectCount}</TableCell>

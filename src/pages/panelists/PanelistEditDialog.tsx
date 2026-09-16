@@ -59,7 +59,7 @@ function PanelistEditForm({
     email: panelist.email,
     phone: panelist.phone,
     postalCode: panelist.postalCode,
-    status: panelist.status,
+    status: panelist.status === 'active' ? 'active' : 'inactive',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -100,7 +100,6 @@ function PanelistEditForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>

@@ -109,8 +109,6 @@ export function mapAuthSession(data: ApiLoginData, input: LoginInput): AuthSessi
 
 export function mapPanelist(item: ApiPanelist, answers: ApiPanelistAnswer[] = []): Panelist {
   const { firstName, lastName } = splitName(item.name ?? '')
-  const verified = asFlag(item.is_verified)
-  const status = item.status === 'inactive' ? 'inactive' : verified ? 'active' : 'pending'
   const demographics = parseDemographics(answers)
   return {
     id: asString(item.id),
@@ -126,7 +124,12 @@ export function mapPanelist(item: ApiPanelist, answers: ApiPanelistAnswer[] = []
     employment: demographics.employment,
     householdIncome: demographics.householdIncome,
     householdSize: demographics.householdSize,
-    status,
+    status: item.status === 'active' ? 'active' : 'inactive',
+    isVerified: asFlag(item.is_verified),
+    onboardingStep: asNumber(item.onboarding_step),
+    onboardingCompletedAt: toIsoDate(item.onboarding_completed_at),
+    updatedAt: toIsoDate(item.updated_at),
+    photo: item.photo ?? '',
     rewardPoints: asNumber(item.balance_point),
     redeemedPoints: 0,
     pendingPoints: 0,
@@ -247,7 +250,7 @@ export function buildDashboard(
   return {
     totalPanelists: panelists.length,
     newRegistrations: panelists.filter((item) => new Date(item.registeredAt).getTime() >= monthAgo).length,
-    activePanelists: panelists.filter((item) => item.status === 'active').length,
+    activePanelists: panelists.filter((item) => item.status === 'active' && item.isVerified).length,
     pendingRewardRequests: pending.length,
     totalPointsIssued: panelists.reduce((sum, item) => sum + item.rewardPoints, 0) + redeemed.reduce((sum, item) => sum + item.points, 0),
     totalPointsRedeemed: redeemed.reduce((sum, item) => sum + item.points, 0),
