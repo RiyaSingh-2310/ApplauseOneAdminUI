@@ -1,12 +1,12 @@
 import { Download } from 'lucide-react'
 import { useState } from 'react'
+import { DateRangePicker } from '@/components/common/DateRangePicker'
 import { DataTable } from '@/components/common/DataTable'
 import { FilterToolbar } from '@/components/common/FilterToolbar'
 import { SearchField } from '@/components/common/SearchField'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { RequestStatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useListQuery } from '@/hooks/useListQuery'
@@ -91,20 +91,16 @@ export function RewardHistoryPage() {
             ))}
           </SelectContent>
         </Select>
-        <div className="grid grid-cols-2 gap-2">
-          <Input
-            type="date"
-            aria-label="From date"
-            value={filters.dateFrom ?? ''}
-            onChange={(event) => setFilters((current) => ({ ...current, page: 1, dateFrom: event.target.value }))}
-          />
-          <Input
-            type="date"
-            aria-label="To date"
-            value={filters.dateTo ?? ''}
-            onChange={(event) => setFilters((current) => ({ ...current, page: 1, dateTo: event.target.value }))}
-          />
-        </div>
+        <DateRangePicker
+          from={filters.dateFrom}
+          to={filters.dateTo}
+          onApply={({ from, to }) =>
+            setFilters((current) => ({ ...current, page: 1, dateFrom: from, dateTo: to }))
+          }
+          onClear={() =>
+            setFilters((current) => ({ ...current, page: 1, dateFrom: undefined, dateTo: undefined }))
+          }
+        />
       </div>
     )
   }

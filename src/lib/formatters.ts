@@ -3,9 +3,13 @@ export {
   formatCompact,
   formatCurrency,
   formatDate,
+  formatDateRangeLabel,
   formatDateTime,
+  formatDisplayDate,
   formatNumber,
   formatPoints,
+  parseLocalDate,
   startOfDayIso,
   toInputDate,
+  toLocalDateString,
 } from '@/lib/format'
