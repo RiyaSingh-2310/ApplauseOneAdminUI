@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { notify } from '@/lib/notify'
 import { queryKeys } from '@/lib/query'
 import { projectService } from '@/services/project.service'
-import type { AssignProjectInput, ProjectListQuery } from '@/types'
+import type { AssignPanelistsInput, AssignmentStatus, ProjectListQuery, UpdateSurveyInput } from '@/types'
 
 export function useProjectList(query: ProjectListQuery) {
   return useQuery({
@@ -17,12 +17,14 @@ function invalidateProjects(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
 }
 
-export function useAssignProject(onSuccess?: () => void) {
+export function useAssignPanelists(onSuccess?: () => void) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: projectService.assign,
-    onSuccess: () => {
-      notify.success('Project assigned successfully.')
+    mutationFn: (input: AssignPanelistsInput) => projectService.assignPanelists(input),
+    onSuccess: (rows) => {
+      notify.success(
+        rows.length === 1 ? 'Survey assigned to 1 panelist.' : `Survey assigned to ${rows.length} panelists.`,
+      )
       invalidateProjects(queryClient)
       onSuccess?.()
     },
@@ -33,10 +35,43 @@ export function useAssignProject(onSuccess?: () => void) {
 export function useUpdateProject(onSuccess?: () => void) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: AssignProjectInput }) =>
+    mutationFn: ({ id, input }: { id: string; input: UpdateSurveyInput }) =>
       projectService.update(id, input),
     onSuccess: () => {
       notify.success('Assignment updated successfully.')
+      invalidateProjects(queryClient)
+      onSuccess?.()
+    },
+    onError: (error) => notify.error(error),
+  })
+}
+
+export function useCompleteAssignment(onSuccess?: () => void) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => projectService.complete(id),
+    onSuccess: () => {
+      notify.success('Assignment marked complete. Reward points were credited.')
+      invalidateProjects(queryClient)
+      onSuccess?.()
+    },
+    onError: (error) => notify.error(error),
+  })
+}
+
+export function useUpdateSurveyStatus(onSuccess?: () => void) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: AssignmentStatus }) =>
+      projectService.updateStatus(id, status),
+    onSuccess: (_, variables) => {
+      notify.success(
+        variables.status === 'terminate'
+          ? 'Assignment terminated.'
+          : variables.status === 'quota_full'
+            ? 'Assignment marked quota full.'
+            : 'Assignment status updated.',
+      )
       invalidateProjects(queryClient)
       onSuccess?.()
     },
@@ -49,7 +84,7 @@ export function useRemoveProject(onSuccess?: () => void) {
   return useMutation({
     mutationFn: projectService.remove,
     onSuccess: () => {
-      notify.success('Project removed successfully.')
+      notify.success('Assignment removed.')
       invalidateProjects(queryClient)
       onSuccess?.()
     },

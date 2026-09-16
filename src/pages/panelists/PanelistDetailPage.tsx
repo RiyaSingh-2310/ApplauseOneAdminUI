@@ -133,8 +133,8 @@ export function PanelistDetailPage() {
               <CardTitle className="font-display text-xl">Activity</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3 text-sm">
-              <Info label="Projects assigned" value={panelist.assignedProjectCount} />
-              <Info label="Projects completed" value={panelist.completedProjectCount} />
+              <Info label="Surveys assigned" value={panelist.assignedProjectCount} />
+              <Info label="Surveys completed" value={panelist.completedProjectCount} />
               <Info label="Rewards earned" value={formatPoints(panelist.lifetimePointsIssued)} />
               <Info label="Rewards redeemed" value={formatPoints(panelist.redeemedPoints)} />
             </CardContent>
@@ -156,11 +156,11 @@ export function PanelistDetailPage() {
 
       <Card className="mt-4 shadow-sm">
         <CardHeader>
-          <CardTitle className="font-display text-xl">Assigned projects</CardTitle>
+          <CardTitle className="font-display text-xl">Assigned surveys</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {panelist.assignments.length === 0 ? (
-            <EmptyState title="No projects assigned." description="Project assignment is not available on the hosted API yet." />
+            <EmptyState title="No surveys assigned." description="Assign a survey from Assigned Projects." />
           ) : (
             panelist.assignments.map((assignment) => (
               <div key={assignment.id} className="flex flex-col gap-2 rounded-2xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -172,12 +172,14 @@ export function PanelistDetailPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <AssignmentStatusBadge status={assignment.status} />
-                  <Button asChild size="sm" variant="outline">
-                    <a href={assignment.surveyUrl} target="_blank" rel="noreferrer">
-                      Open Survey
-                      <ExternalLink className="size-3.5" />
-                    </a>
-                  </Button>
+                  {assignment.surveyUrl ? (
+                    <Button asChild size="sm" variant="outline">
+                      <a href={assignment.surveyUrl} target="_blank" rel="noreferrer">
+                        Open Survey
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             ))

@@ -166,8 +166,7 @@ export const seedAssignments: ProjectAssignment[] = seedPanelists.flatMap((panel
   const count = 1 + (panelistIndex % 3)
   return Array.from({ length: count }, (_, offset) => {
     const project = projectCatalog[(panelistIndex + offset) % projectCatalog.length]
-    const statuses = ['assigned', 'in_progress', 'completed', 'expired'] as const
-    const completions = ['not_started', 'in_progress', 'completed', 'expired'] as const
+    const statuses = ['active', 'complete', 'terminate', 'quota_full'] as const
     const status = statuses[(panelistIndex + offset) % statuses.length]
     return {
       id: `asg_${2000 + panelistIndex * 10 + offset}`,
@@ -177,11 +176,10 @@ export const seedAssignments: ProjectAssignment[] = seedPanelists.flatMap((panel
       panelistEmail: panelist.email,
       surveyUrl: project.url,
       assignedAt: daysAgo(offset + panelistIndex, 14),
-      expiryDate: daysAgo(-(14 + offset), 18),
       status,
-      completionStatus: completions[(panelistIndex + offset) % completions.length],
       rewardPoints: project.points,
-      description: project.description,
+      completedAt: status === 'complete' ? daysAgo(offset, 8) : '',
+      remark: project.description,
     }
   })
 })

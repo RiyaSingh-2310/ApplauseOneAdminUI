@@ -7,19 +7,27 @@ import { SearchField } from '@/components/common/SearchField'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SortableHeader } from '@/components/shared/SortableHeader'
-import { AssignmentStatusBadge, CompletionStatusBadge } from '@/components/shared/StatusBadge'
+import { AssignmentStatusBadge, SurveyRewardBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useListQuery } from '@/hooks/useListQuery'
-import { useAssignProject, useProjectList, useRemoveProject, useUpdateProject } from '@/hooks/useProjects'
+import {
+  useAssignPanelists,
+  useCompleteAssignment,
+  useProjectList,
+  useRemoveProject,
+  useUpdateProject,
+  useUpdateSurveyStatus,
+} from '@/hooks/useProjects'
 import { getErrorMessage } from '@/lib/errors'
 import { formatDate, formatNumber } from '@/lib/format'
 import { ASSIGNMENT_STATUS_LABELS } from '@/lib/labels'
 import type { AssignmentStatus, ProjectAssignment, ProjectListQuery } from '@/types'
+import { AssignPanelistsDialog } from './AssignPanelistsDialog'
 import { AssignProjectDialog } from './AssignProjectDialog'
+import { AssignmentDetailsSheet } from './AssignmentDetailsSheet'
 
 const defaultQuery: ProjectListQuery = {
   page: 1,
@@ -34,13 +42,22 @@ export function ProjectsPage() {
   const list = useProjectList(query)
   const [filterOpen, setFilterOpen] = useState(false)
   const [assignOpen, setAssignOpen] = useState(false)
-  const [editing, setEditing] = useState<ProjectAssignment | null>(null)
   const [viewing, setViewing] = useState<ProjectAssignment | null>(null)
+  const [editing, setEditing] = useState<ProjectAssignment | null>(null)
+  const [completing, setCompleting] = useState<ProjectAssignment | null>(null)
+  const [statusChange, setStatusChange] = useState<{
+    assignment: ProjectAssignment
+    status: Extract<AssignmentStatus, 'terminate' | 'quota_full'>
+  } | null>(null)
   const [removing, setRemoving] = useState<ProjectAssignment | null>(null)
-  const assign = useAssignProject(() => setAssignOpen(false))
+  const assign = useAssignPanelists(() => setAssignOpen(false))
   const update = useUpdateProject(() => setEditing(null))
+  const complete = useCompleteAssignment(() => setCompleting(null))
+  const updateStatus = useUpdateSurveyStatus(() => setStatusChange(null))
   const remove = useRemoveProject(() => setRemoving(null))
   const rows = list.data?.data ?? []
+  const completeBusy = complete.isPending
+  const statusBusy = updateStatus.isPending
 
   function renderFilters() {
     return (
@@ -55,13 +72,11 @@ export function ProjectsPage() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All statuses</SelectItem>
-          {Object.entries(ASSIGNMENT_STATUS_LABELS)
-            .filter(([value]) => value !== 'removed')
-            .map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
+          {Object.entries(ASSIGNMENT_STATUS_LABELS).map(([value, label]) => (
+            <SelectItem key={value} value={value}>
+              {label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     )
@@ -71,12 +86,12 @@ export function ProjectsPage() {
     <div>
       <PageHeader
         title="Assigned Projects"
-        description="Match surveys to panelists and keep completion status current."
+        description="Assign survey URLs to panelists, then mark complete to credit reward points once."
         crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Assigned Projects' }]}
         actions={
           <Button onClick={() => setAssignOpen(true)}>
             <Plus className="size-4" />
-            Assign project
+            Assign panelists
           </Button>
         }
       />
@@ -91,7 +106,7 @@ export function ProjectsPage() {
                   setSearch(value)
                   setFilters((current) => ({ ...current, page: 1 }))
                 }}
-                placeholder="Search project, panelist, or URL"
+                placeholder="Search survey, URL, panelist, or email"
                 searching={search !== query.search}
               />
             }
@@ -104,8 +119,14 @@ export function ProjectsPage() {
         loading={list.isLoading}
         error={list.isError ? getErrorMessage(list.error) : undefined}
         onRetry={() => list.refetch()}
-        emptyTitle="No projects assigned."
-        emptyDescription="Project assignment is not available on the hosted API yet."
+        emptyTitle="No survey assignments yet."
+        emptyDescription="Assign a survey URL and reward points to one or more panelists. Completing an assignment credits those points once."
+        emptyAction={
+          <Button onClick={() => setAssignOpen(true)}>
+            <Plus className="size-4" />
+            Assign panelists
+          </Button>
+        }
         page={list.data?.page}
         pageSize={list.data?.pageSize}
         total={list.data?.total ?? 0}
@@ -113,118 +134,173 @@ export function ProjectsPage() {
       >
         <div className="space-y-3 p-4 md:hidden">
           {rows.map((item) => (
-            <div key={item.id} className="rounded-2xl border px-4 py-3">
+            <button
+              key={item.id}
+              type="button"
+              className="w-full rounded-2xl border px-4 py-3 text-left"
+              onClick={() => setViewing(item)}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-medium">{item.projectName}</p>
-                  <p className="text-xs text-muted-foreground">{item.panelistName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.panelistName} · ID {item.panelistId}
+                  </p>
                 </div>
                 <AssignmentStatusBadge status={item.status} />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {formatDate(item.assignedAt)} · {formatNumber(item.rewardPoints)} pts
               </p>
-            </div>
+            </button>
           ))}
         </div>
         <div className="hidden md:block">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <SortableHeader
-                  label="Project name"
-                  column="projectName"
-                  sortBy={filters.sortBy}
-                  sortDir={filters.sortDir}
-                  onSort={sort}
-                />
-              </TableHead>
-              <TableHead>Panelist</TableHead>
-              <TableHead>Assigned date</TableHead>
-              <TableHead>Survey URL</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Reward points</TableHead>
-              <TableHead>Completion</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.projectName}</TableCell>
-                <TableCell>
-                  <div>
-                    <p>{item.panelistName}</p>
-                    <p className="text-xs text-muted-foreground">{item.panelistEmail}</p>
-                  </div>
-                </TableCell>
-                <TableCell>{formatDate(item.assignedAt)}</TableCell>
-                <TableCell className="max-w-48 truncate text-primary">{item.surveyUrl}</TableCell>
-                <TableCell>
-                  <AssignmentStatusBadge status={item.status} />
-                </TableCell>
-                <TableCell>{formatNumber(item.rewardPoints)}</TableCell>
-                <TableCell>
-                  <CompletionStatusBadge status={item.completionStatus} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <RowActions>
-                    <DropdownMenuItem onClick={() => setViewing(item)}>View</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setAssignOpen(true)}>Assign</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setEditing(item)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <a href={item.surveyUrl} target="_blank" rel="noreferrer">
-                        Open URL
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setRemoving(item)}>Remove</DropdownMenuItem>
-                  </RowActions>
-                </TableCell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  <SortableHeader
+                    label="Survey / project"
+                    column="projectName"
+                    sortBy={filters.sortBy}
+                    sortDir={filters.sortDir}
+                    onSort={sort}
+                  />
+                </TableHead>
+                <TableHead>Panelist</TableHead>
+                <TableHead>Panelist ID</TableHead>
+                <TableHead>Assignment status</TableHead>
+                <TableHead>Reward points</TableHead>
+                <TableHead>Reward status</TableHead>
+                <TableHead>Assigned date</TableHead>
+                <TableHead>Completed date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {rows.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.projectName}</TableCell>
+                  <TableCell>
+                    <div>
+                      <p>{item.panelistName}</p>
+                      <p className="text-xs text-muted-foreground">{item.panelistEmail}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>{item.panelistId}</TableCell>
+                  <TableCell>
+                    <AssignmentStatusBadge status={item.status} />
+                  </TableCell>
+                  <TableCell>{formatNumber(item.rewardPoints)}</TableCell>
+                  <TableCell>
+                    <SurveyRewardBadge status={item.status} />
+                  </TableCell>
+                  <TableCell>{formatDate(item.assignedAt)}</TableCell>
+                  <TableCell>{item.completedAt ? formatDate(item.completedAt) : '—'}</TableCell>
+                  <TableCell className="text-right">
+                    <RowActions>
+                      <DropdownMenuItem onClick={() => setViewing(item)}>View</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setEditing(item)}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setAssignOpen(true)}>Assign</DropdownMenuItem>
+                      {item.status === 'active' ? (
+                        <DropdownMenuItem
+                          disabled={completeBusy}
+                          onClick={() => !completeBusy && setCompleting(item)}
+                        >
+                          Mark completed
+                        </DropdownMenuItem>
+                      ) : null}
+                      {item.status === 'complete' ? (
+                        <DropdownMenuItem onClick={() => setViewing(item)}>View reward details</DropdownMenuItem>
+                      ) : null}
+                      {item.status === 'active' ? (
+                        <DropdownMenuItem
+                          disabled={statusBusy}
+                          onClick={() => !statusBusy && setStatusChange({ assignment: item, status: 'terminate' })}
+                        >
+                          Terminate
+                        </DropdownMenuItem>
+                      ) : null}
+                      {item.status === 'active' ? (
+                        <DropdownMenuItem
+                          disabled={statusBusy}
+                          onClick={() => !statusBusy && setStatusChange({ assignment: item, status: 'quota_full' })}
+                        >
+                          Quota full
+                        </DropdownMenuItem>
+                      ) : null}
+                      {item.surveyUrl ? (
+                        <DropdownMenuItem asChild>
+                          <a href={item.surveyUrl} target="_blank" rel="noreferrer">
+                            Open URL
+                            <ExternalLink className="size-3.5" />
+                          </a>
+                        </DropdownMenuItem>
+                      ) : null}
+                      <DropdownMenuItem onClick={() => setRemoving(item)}>Remove</DropdownMenuItem>
+                    </RowActions>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </DataTable>
 
-      <Sheet open={Boolean(viewing)} onOpenChange={(open) => !open && setViewing(null)}>
-        <SheetContent className="sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>{viewing?.projectName}</SheetTitle>
-          </SheetHeader>
-          {viewing ? (
-            <div className="space-y-3 p-4 text-sm">
-              <p><span className="text-muted-foreground">Panelist:</span> {viewing.panelistName}</p>
-              <p><span className="text-muted-foreground">Assigned:</span> {formatDate(viewing.assignedAt)}</p>
-              <p><span className="text-muted-foreground">Expires:</span> {formatDate(viewing.expiryDate)}</p>
-              <p><span className="text-muted-foreground">Points:</span> {formatNumber(viewing.rewardPoints)}</p>
-              <p className="leading-6">{viewing.description}</p>
-              <Button asChild variant="outline">
-                <a href={viewing.surveyUrl} target="_blank" rel="noreferrer">
-                  Open Survey
-                  <ExternalLink className="size-4" />
-                </a>
-              </Button>
-            </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+      <AssignmentDetailsSheet assignment={viewing} onOpenChange={(open) => !open && setViewing(null)} />
+
+      <AssignPanelistsDialog
+        open={assignOpen}
+        pending={assign.isPending}
+        onOpenChange={setAssignOpen}
+        onSubmit={(input) => {
+          if (assign.isPending) return
+          assign.mutate(input)
+        }}
+      />
 
       <AssignProjectDialog
-        open={assignOpen || Boolean(editing)}
+        open={Boolean(editing)}
         assignment={editing}
-        pending={assign.isPending || update.isPending}
-        onOpenChange={(open) => {
-          if (!open) {
-            setAssignOpen(false)
-            setEditing(null)
-          }
+        pending={update.isPending}
+        onOpenChange={(open) => !open && setEditing(null)}
+        onSubmit={(input) => editing && !update.isPending && update.mutate({ id: editing.id, input })}
+      />
+
+      <ConfirmDialog
+        open={Boolean(completing)}
+        onOpenChange={(open) => !open && setCompleting(null)}
+        title="Mark this assignment complete?"
+        description={
+          completing
+            ? `${completing.panelistName} (ID ${completing.panelistId}) · ${completing.projectName} · ${formatNumber(completing.rewardPoints)} points. This will credit ${formatNumber(completing.rewardPoints)} reward points to the panelist. Points are issued only once.`
+            : undefined
+        }
+        confirmLabel="Mark completed"
+        pending={completeBusy}
+        onConfirm={() => {
+          if (!completing || completeBusy) return
+          complete.mutate(completing.id)
         }}
-        onSubmit={(input) => {
-          if (editing) update.mutate({ id: editing.id, input })
-          else assign.mutate(input)
+      />
+
+      <ConfirmDialog
+        open={Boolean(statusChange)}
+        onOpenChange={(open) => !open && setStatusChange(null)}
+        title={
+          statusChange?.status === 'terminate' ? 'Terminate this assignment?' : 'Mark this assignment quota full?'
+        }
+        description={
+          statusChange
+            ? `${statusChange.assignment.panelistName} · ${statusChange.assignment.projectName}. Reward points will not be credited.`
+            : undefined
+        }
+        confirmLabel={statusChange?.status === 'terminate' ? 'Terminate' : 'Quota full'}
+        pending={statusBusy}
+        onConfirm={() => {
+          if (!statusChange || statusBusy) return
+          updateStatus.mutate({ id: statusChange.assignment.id, status: statusChange.status })
         }}
       />
 
@@ -232,11 +308,11 @@ export function ProjectsPage() {
         open={Boolean(removing)}
         onOpenChange={(open) => !open && setRemoving(null)}
         title="Remove this assignment?"
-        description="The survey will no longer appear in the panelist portal."
+        description="The survey will no longer appear for this panelist."
         confirmLabel="Remove"
         destructive
         pending={remove.isPending}
-        onConfirm={() => removing && remove.mutate(removing.id)}
+        onConfirm={() => removing && !remove.isPending && remove.mutate(removing.id)}
       />
     </div>
   )

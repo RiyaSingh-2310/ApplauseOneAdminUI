@@ -47,14 +47,19 @@ export function PanelistStatusBadge({ status }: { status: PanelistStatus }) {
 
 export function AssignmentStatusBadge({ status }: { status: AssignmentStatus }) {
   const tone =
-    status === 'completed'
+    status === 'complete'
       ? 'success'
-      : status === 'in_progress'
-        ? 'warning'
-        : status === 'expired' || status === 'removed'
-          ? 'muted'
+      : status === 'terminate'
+        ? 'danger'
+        : status === 'quota_full'
+          ? 'warning'
           : 'info'
   return <ToneBadge tone={tone}>{ASSIGNMENT_STATUS_LABELS[status]}</ToneBadge>
+}
+
+export function SurveyRewardBadge({ status }: { status: AssignmentStatus }) {
+  const issued = status === 'complete'
+  return <ToneBadge tone={issued ? 'success' : 'muted'}>{issued ? 'Issued' : 'Not issued'}</ToneBadge>
 }
 
 export function CompletionStatusBadge({ status }: { status: CompletionStatus }) {

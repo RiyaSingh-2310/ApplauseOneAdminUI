@@ -16,6 +16,8 @@ import type {
   RewardAnalytics,
   RewardRequest,
   RewardRequestStatus,
+  AssignmentStatus,
+  ProjectAssignment,
   RewardTransaction,
   TrendPoint,
 } from '@/types'
@@ -26,6 +28,7 @@ import type {
   ApiPanelistAnswer,
   ApiRewardRequest,
   ApiSettings,
+  ApiSurveyAssignment,
 } from '@/types/api'
 
 export function asString(value: unknown, fallback = '') {
@@ -147,6 +150,7 @@ export function mapPanelistDetail(
   item: ApiPanelist,
   answers: ApiPanelistAnswer[] = [],
   requests: RewardRequest[] = [],
+  assignments: ProjectAssignment[] = [],
 ): PanelistDetail {
   const panelist = mapPanelist(item, answers)
   const mine = requests.filter((request) => request.panelistId === panelist.id)
@@ -157,7 +161,9 @@ export function mapPanelistDetail(
     redeemedPoints: redeemed,
     pendingPoints: pending,
     lifetimePointsIssued: panelist.rewardPoints + redeemed,
-    assignments: [],
+    assignedProjectCount: assignments.length,
+    completedProjectCount: assignments.filter((assignment) => assignment.status === 'complete').length,
+    assignments,
     recentRewards: mine.map(toTransaction),
   }
 }
@@ -430,4 +436,30 @@ function weekKey(date: Date) {
 
 function labelLookup(key: string) {
   return key.charAt(0).toUpperCase() + key.slice(1)
+}
+
+export function mapSurveyStatus(value?: string): AssignmentStatus {
+  if (value === 'complete' || value === 'terminate' || value === 'quota_full') return value
+  return 'active'
+}
+
+export function mapSurveyAssignment(item: ApiSurveyAssignment): ProjectAssignment {
+  return {
+    id: asString(item.id),
+    projectName: item.survey_name?.trim() || item.survey_url || 'Survey',
+    panelistId: asString(item.panelist_id),
+    panelistName: item.panelist_name?.trim() || 'Panelist',
+    panelistEmail: item.panelist_email ?? '',
+    surveyUrl: item.survey_url ?? '',
+    assignedAt: toIsoDate(item.created_at),
+    status: mapSurveyStatus(item.status),
+    rewardPoints: asNumber(item.reward_points),
+    completedAt: toIsoDate(item.completed_at),
+    remark: item.remark ?? '',
+    createdBy: item.created_by == null ? undefined : asString(item.created_by),
+    createdByName: item.created_by_name ?? undefined,
+    updatedBy: item.updated_by == null ? undefined : asString(item.updated_by),
+    updatedByName: item.updated_by_name ?? undefined,
+    updatedAt: toIsoDate(item.updated_at) || undefined,
+  }
 }

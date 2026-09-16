@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   ClipboardList,
   Gift,
   History,
@@ -16,7 +15,7 @@ export const ADMIN_NAV = [
   { to: '/admin/rewards', label: 'Rewards', icon: Gift },
   { to: '/admin/reward-requests', label: 'Reward Requests', icon: Wallet },
   { to: '/admin/reward-history', label: 'Reward History', icon: History },
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  // { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ] as const
 

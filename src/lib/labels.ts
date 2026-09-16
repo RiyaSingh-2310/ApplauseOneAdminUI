@@ -59,11 +59,10 @@ export const PANELIST_STATUS_LABELS: Record<PanelistStatus, string> = {
 }
 
 export const ASSIGNMENT_STATUS_LABELS: Record<AssignmentStatus, string> = {
-  assigned: 'Assigned',
-  in_progress: 'In progress',
-  completed: 'Completed',
-  expired: 'Expired',
-  removed: 'Removed',
+  active: 'Active',
+  complete: 'Complete',
+  terminate: 'Terminated',
+  quota_full: 'Quota full',
 }
 
 export const COMPLETION_STATUS_LABELS: Record<CompletionStatus, string> = {

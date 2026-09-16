@@ -2,7 +2,6 @@ import type {
   AdminSettings,
   AssignProjectInput,
   AssignmentStatus,
-  CompletionStatus,
   PanelistDetail,
   PanelistStatus,
   ProjectAssignment,
@@ -55,13 +54,12 @@ function prepare(data: StoreShape): StoreShape {
 function persist(data: StoreShape) {
   window.localStorage.setItem(STORE_KEY, JSON.stringify(data))
   const shared = data.assignments
-    .filter((item) => item.status !== 'removed')
     .map((item) => ({
       id: item.id,
       name: item.projectName,
-      description: item.description ?? '',
+      description: item.remark ?? '',
       assignedAt: item.assignedAt,
-      status: toPortalStatus(item.status, item.completionStatus),
+      status: toPortalStatus(item.status),
       points: item.rewardPoints,
       surveyUrl: item.surveyUrl,
       panelistEmail: item.panelistEmail,
@@ -70,10 +68,9 @@ function persist(data: StoreShape) {
   window.localStorage.setItem(SHARED_ASSIGNMENTS_KEY, JSON.stringify(shared))
 }
 
-function toPortalStatus(status: AssignmentStatus, completion: CompletionStatus) {
-  if (status === 'expired' || completion === 'expired') return 'expired'
-  if (status === 'completed' || completion === 'completed') return 'completed'
-  if (status === 'in_progress' || completion === 'in_progress') return 'in-progress'
+function toPortalStatus(status: AssignmentStatus) {
+  if (status === 'complete') return 'completed'
+  if (status === 'terminate' || status === 'quota_full') return 'expired'
   return 'new'
 }
 
@@ -116,7 +113,7 @@ class AdminMockStore {
     return {
       ...panelist,
       assignments: this.data.assignments
-        .filter((item) => item.panelistId === id && item.status !== 'removed')
+        .filter((item) => item.panelistId === id)
         .sort((a, b) => +new Date(b.assignedAt) - +new Date(a.assignedAt)),
       recentRewards: this.data.transactions
         .filter((item) => item.panelistId === id)
@@ -147,7 +144,7 @@ class AdminMockStore {
   }
 
   assignments() {
-    return this.data.assignments.filter((item) => item.status !== 'removed')
+    return this.data.assignments
   }
 
   assignment(id: string) {
@@ -164,12 +161,11 @@ class AdminMockStore {
       panelistName: fullName(panelist.firstName, panelist.lastName),
       panelistEmail: panelist.email,
       surveyUrl: input.surveyUrl,
-      assignedAt: new Date(input.assignedAt).toISOString(),
-      expiryDate: new Date(input.expiryDate).toISOString(),
-      status: input.status,
-      completionStatus: input.status === 'completed' ? 'completed' : 'not_started',
+      assignedAt: new Date().toISOString(),
+      status: 'active',
       rewardPoints: input.rewardPoints,
-      description: input.description,
+      completedAt: '',
+      remark: input.remark ?? '',
     }
     this.data.assignments.unshift(assignment)
     panelist.assignedProjectCount += 1
@@ -199,18 +195,16 @@ class AdminMockStore {
     if (input.projectName) assignment.projectName = input.projectName
     if (input.surveyUrl) assignment.surveyUrl = input.surveyUrl
     if (input.rewardPoints !== undefined) assignment.rewardPoints = input.rewardPoints
-    if (input.assignedAt) assignment.assignedAt = new Date(input.assignedAt).toISOString()
-    if (input.expiryDate) assignment.expiryDate = new Date(input.expiryDate).toISOString()
-    if (input.status) assignment.status = input.status
-    if (input.description !== undefined) assignment.description = input.description
+    if (input.remark !== undefined) assignment.remark = input.remark
     this.save()
     return assignment
   }
 
   removeAssignment(id: string) {
-    const assignment = this.data.assignments.find((item) => item.id === id)
-    if (!assignment) return false
-    assignment.status = 'removed'
+    const index = this.data.assignments.findIndex((item) => item.id === id)
+    if (index === -1) return false
+    const assignment = this.data.assignments[index]
+    this.data.assignments.splice(index, 1)
     const panelist = this.data.panelists.find((item) => item.id === assignment.panelistId)
     if (panelist) panelist.assignedProjectCount = Math.max(0, panelist.assignedProjectCount - 1)
     this.data.dashboard.activeProjects = Math.max(0, this.data.dashboard.activeProjects - 1)

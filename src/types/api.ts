@@ -92,3 +92,59 @@ export interface ApiSettingsInput {
   flipkart_enabled?: 0 | 1
   paypal_enabled?: 0 | 1
 }
+
+export type ApiSurveyStatus = 'active' | 'complete' | 'terminate' | 'quota_full'
+
+export interface ApiSurveyAssignment {
+  id: number | string
+  panelist_id: number | string
+  survey_name?: string | null
+  survey_url: string
+  reward_points?: number | string
+  status?: string
+  completed_at?: string | null
+  remark?: string | null
+  created_by?: number | string | null
+  updated_by?: number | string | null
+  created_at?: string
+  updated_at?: string | null
+  panelist_name?: string | null
+  panelist_email?: string | null
+  created_by_name?: string | null
+  updated_by_name?: string | null
+  deleted_at?: string | null
+}
+
+export interface ApiSurveyListData {
+  items: ApiSurveyAssignment[]
+  page: number
+  limit: number
+  total: number
+}
+
+export interface ApiSurveyDetailData {
+  survey: ApiSurveyAssignment
+}
+
+export interface ApiSurveyCreateData {
+  survey?: ApiSurveyAssignment
+  surveys?: ApiSurveyAssignment[]
+  count?: number
+}
+
+export interface ApiSurveyCreateInput {
+  panelist_id?: number
+  panelist_ids?: number[]
+  survey_url: string
+  survey_name?: string
+  reward_points: number
+  remark?: string
+}
+
+export interface ApiSurveyUpdateInput {
+  survey_name?: string
+  survey_url?: string
+  reward_points?: number
+  status?: ApiSurveyStatus
+  remark?: string
+}

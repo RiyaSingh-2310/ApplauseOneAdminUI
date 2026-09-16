@@ -8,6 +8,7 @@ import {
   paginateRows,
   sortRows,
 } from '@/lib/mappers'
+import { projectService } from '@/services/project.service'
 import type {
   LookupOption,
   PaginatedResult,
@@ -69,12 +70,13 @@ export const panelistService = {
     }))
   },
   async get(id: string): Promise<PanelistDetail> {
-    const [detail, requestData] = await Promise.all([
+    const [detail, requestData, assignments] = await Promise.all([
       apiRequest<ApiPanelistDetailData>(`/admin/panelists/${id}`),
       apiRequest<ApiRewardRequestListData>('/admin/reward-requests'),
+      projectService.listForPanelist(id),
     ])
     const requests = (requestData.requests ?? []).map(mapRewardRequest)
-    return mapPanelistDetail(detail.panelist, detail.answers ?? [], requests)
+    return mapPanelistDetail(detail.panelist, detail.answers ?? [], requests, assignments)
   },
   async update(id: string, input: UpdatePanelistInput): Promise<PanelistDetail> {
     await apiRequest(`/admin/panelists/${id}`, {

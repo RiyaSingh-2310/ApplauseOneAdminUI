@@ -1,16 +1,7 @@
 import type { ListQuery } from './common.types'
 
-export type AssignmentStatus =
-  | 'assigned'
-  | 'in_progress'
-  | 'completed'
-  | 'expired'
-  | 'removed'
-export type CompletionStatus =
-  | 'not_started'
-  | 'in_progress'
-  | 'completed'
-  | 'expired'
+export type AssignmentStatus = 'active' | 'complete' | 'terminate' | 'quota_full'
+export type CompletionStatus = 'not_started' | 'in_progress' | 'completed' | 'expired'
 
 export interface ProjectAssignment {
   id: string
@@ -20,11 +11,15 @@ export interface ProjectAssignment {
   panelistEmail: string
   surveyUrl: string
   assignedAt: string
-  expiryDate: string
   status: AssignmentStatus
-  completionStatus: CompletionStatus
   rewardPoints: number
-  description?: string
+  completedAt: string
+  remark: string
+  createdBy?: string
+  createdByName?: string
+  updatedBy?: string
+  updatedByName?: string
+  updatedAt?: string
 }
 
 export interface AssignProjectInput {
@@ -32,10 +27,39 @@ export interface AssignProjectInput {
   projectName: string
   surveyUrl: string
   rewardPoints: number
-  assignedAt: string
-  expiryDate: string
-  status: AssignmentStatus
-  description?: string
+  remark?: string
+}
+
+export interface SelectedPanelist {
+  id: string
+  name: string
+  email: string
+}
+
+export interface AssignPanelistsInput {
+  surveyName: string
+  surveyUrl: string
+  panelistIds: string[]
+  rewardPoints: number
+  remark?: string
+}
+
+export interface UpdateSurveyInput {
+  surveyName?: string
+  surveyUrl?: string
+  rewardPoints?: number
+  status?: AssignmentStatus
+  remark?: string
+}
+
+export interface AssignmentSummary {
+  surveyName: string
+  surveyUrl: string
+  panelistCount: number
+  panelists: SelectedPanelist[]
+  rewardPointsPerPanelist: number
+  totalRewardPoints: number
+  remark?: string
 }
 
 export interface ProjectListQuery extends ListQuery {
