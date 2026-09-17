@@ -75,6 +75,16 @@ export function RewardHistoryPage() {
             ))}
           </SelectContent>
         </Select>
+        <DateRangePicker
+          from={filters.dateFrom}
+          to={filters.dateTo}
+          onApply={({ from, to }) =>
+            setFilters((current) => ({ ...current, page: 1, dateFrom: from, dateTo: to }))
+          }
+          onClear={() =>
+            setFilters((current) => ({ ...current, page: 1, dateFrom: undefined, dateTo: undefined }))
+          }
+        />
         <Select
           value={filters.rewardType ?? 'all'}
           onValueChange={(value) => setFilters((current) => ({ ...current, page: 1, rewardType: value }))}
@@ -91,16 +101,6 @@ export function RewardHistoryPage() {
             ))}
           </SelectContent>
         </Select>
-        <DateRangePicker
-          from={filters.dateFrom}
-          to={filters.dateTo}
-          onApply={({ from, to }) =>
-            setFilters((current) => ({ ...current, page: 1, dateFrom: from, dateTo: to }))
-          }
-          onClear={() =>
-            setFilters((current) => ({ ...current, page: 1, dateFrom: undefined, dateTo: undefined }))
-          }
-        />
       </div>
     )
   }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DataTable } from '@/components/common/DataTable'
+import { DateRangePicker } from '@/components/common/DateRangePicker'
 import { FilterToolbar } from '@/components/common/FilterToolbar'
 import { RowActions } from '@/components/common/RowActions'
 import { SearchField } from '@/components/common/SearchField'
@@ -8,7 +9,6 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SortableHeader } from '@/components/shared/SortableHeader'
 import { PanelistStatusBadge, VerificationBadge } from '@/components/shared/StatusBadge'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
@@ -47,7 +47,7 @@ export function PanelistsPage() {
 
   function renderFilters() {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Select
           value={filters.status ?? 'all'}
           onValueChange={(value) =>
@@ -104,24 +104,26 @@ export function PanelistsPage() {
             ))}
           </SelectContent>
         </Select>
-        <div className="grid grid-cols-2 gap-2">
-          <Input
-            type="date"
-            aria-label="Registered from"
-            value={filters.registeredFrom ?? ''}
-            onChange={(event) =>
-              setFilters((current) => ({ ...current, page: 1, registeredFrom: event.target.value }))
-            }
-          />
-          <Input
-            type="date"
-            aria-label="Registered to"
-            value={filters.registeredTo ?? ''}
-            onChange={(event) =>
-              setFilters((current) => ({ ...current, page: 1, registeredTo: event.target.value }))
-            }
-          />
-        </div>
+        <DateRangePicker
+          from={filters.registeredFrom}
+          to={filters.registeredTo}
+          onApply={({ from, to }) =>
+            setFilters((current) => ({
+              ...current,
+              page: 1,
+              registeredFrom: from,
+              registeredTo: to,
+            }))
+          }
+          onClear={() =>
+            setFilters((current) => ({
+              ...current,
+              page: 1,
+              registeredFrom: undefined,
+              registeredTo: undefined,
+            }))
+          }
+        />
       </div>
     )
   }
