@@ -139,11 +139,11 @@ export function DateRangePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          align="start"
+          align="end"
           side="bottom"
           sideOffset={6}
           collisionPadding={16}
-          className="z-[60] w-auto max-w-[calc(100vw-2rem)] overflow-auto p-0"
+          className="z-[60] w-auto max-w-[min(44rem,calc(100vw-2rem))] overflow-x-auto overflow-y-auto p-0"
         >
           <div className="border-b p-3">
             <div className="grid min-w-0 grid-cols-2 gap-2 text-xs">
@@ -165,7 +165,6 @@ export function DateRangePicker({
             mode="range"
             timeZone={timeZone}
             captionLayout="dropdown"
-            navLayout="around"
             numberOfMonths={wide ? 2 : 1}
             selected={draft}
             onSelect={handleSelect}
