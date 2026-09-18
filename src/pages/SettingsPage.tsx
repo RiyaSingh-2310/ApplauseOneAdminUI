@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { PasswordInput } from '@/components/auth/PasswordInput'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -12,8 +14,16 @@ import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/context/AuthContext'
 import { useSaveSettings, useSettings } from '@/hooks/useSettings'
 import { useTheme } from '@/hooks/useTheme'
+import {
+  MAX_ADMIN_NAME_LENGTH,
+  validateAdminName,
+  validateAdminPassword,
+  validatePasswordConfirmation,
+} from '@/lib/authValidation'
 import { getErrorMessage } from '@/lib/errors'
+import { notify } from '@/lib/notify'
 import { validateNonNegativePoints } from '@/lib/validators'
+import { adminAuthService } from '@/services/adminAuth.service'
 import type { AdminSettings } from '@/types'
 
 function initials(name: string) {
@@ -27,13 +37,48 @@ function initials(name: string) {
 
 export function SettingsPage() {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const { theme } = useTheme()
   const settings = useSettings()
   const save = useSaveSettings()
   const [draft, setDraft] = useState<AdminSettings | null>(null)
   const [pointsError, setPointsError] = useState<string>()
   const [payoutError, setPayoutError] = useState<string>()
+  const [name, setName] = useState(user?.name ?? '')
+  const [nameBaseline, setNameBaseline] = useState(user?.name ?? '')
+  const [nameError, setNameError] = useState<string>()
+  const [namePending, setNamePending] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordErrors, setPasswordErrors] = useState<{
+    current?: string
+    next?: string
+    confirm?: string
+  }>({})
+  const [passwordPending, setPasswordPending] = useState(false)
+  const [passwordTouched, setPasswordTouched] = useState(false)
   const form = draft ?? settings.data ?? null
+
+  const sessionName = user?.name ?? ''
+  if (sessionName !== nameBaseline) {
+    setNameBaseline(sessionName)
+    setName(sessionName)
+    setNameError(undefined)
+  }
+
+  const nameDirty = name.trim() !== sessionName.trim()
+  const nameValid = !validateAdminName(name)
+  const canUpdateName = Boolean(user) && nameDirty && nameValid && !namePending
+
+  const passwordFormValid = useMemo(() => {
+    const currentError = !currentPassword.trim()
+      ? 'Current password is required.'
+      : validateAdminPassword(currentPassword)
+    const nextError = validateAdminPassword(newPassword)
+    const confirmError = validatePasswordConfirmation(newPassword, confirmPassword)
+    return !currentError && !nextError && !confirmError
+  }, [confirmPassword, currentPassword, newPassword])
 
   if (settings.isLoading) return <LoadingSkeleton />
   if (settings.isError) {
@@ -52,6 +97,53 @@ export function SettingsPage() {
     setPayoutError(nextPayoutError)
     if (registrationError || nextPayoutError) return
     save.mutate(form, { onSuccess: () => setDraft(null) })
+  }
+
+  async function updateName() {
+    if (!canUpdateName) return
+    const error = validateAdminName(name)
+    setNameError(error)
+    if (error) return
+    setNamePending(true)
+    try {
+      await adminAuthService.updateProfile({ name: name.trim() })
+    } catch (error) {
+      notify.error(error)
+    } finally {
+      setNamePending(false)
+    }
+  }
+
+  async function submitPasswordChange() {
+    setPasswordTouched(true)
+    const currentError = !currentPassword.trim()
+      ? 'Current password is required.'
+      : validateAdminPassword(currentPassword)
+    const nextError = validateAdminPassword(newPassword)
+    const confirmError = validatePasswordConfirmation(newPassword, confirmPassword)
+    setPasswordErrors({
+      current: currentError,
+      next: nextError,
+      confirm: confirmError,
+    })
+    if (currentError || nextError || confirmError || passwordPending) return
+
+    setPasswordPending(true)
+    try {
+      await adminAuthService.changePassword({
+        currentPassword,
+        newPassword,
+      })
+    } catch (error) {
+      notify.error(error)
+    } finally {
+      setPasswordPending(false)
+    }
+  }
+
+  function handleLogout() {
+    logout()
+    navigate('/admin/login', { replace: true })
   }
 
   return (
@@ -80,7 +172,7 @@ export function SettingsPage() {
                 <p className="text-xs text-muted-foreground">
                   Photo upload is not available — the Admin API does not expose a profile-photo endpoint.
                 </p>
-                <Button type="button" variant="outline" size="sm" disabled>
+                <Button type="button" variant="outline" size="sm" disabled className="cursor-not-allowed">
                   Change photo
                 </Button>
               </div>
@@ -89,22 +181,43 @@ export function SettingsPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="admin-name">Name</Label>
-                <Input id="admin-name" value={user?.name ?? ''} disabled readOnly />
-                <p className="text-xs text-muted-foreground">Name updates are not supported by the Admin API.</p>
+                <Input
+                  id="admin-name"
+                  value={name}
+                  maxLength={MAX_ADMIN_NAME_LENGTH}
+                  aria-invalid={Boolean(nameError)}
+                  onChange={(event) => {
+                    setName(event.target.value.slice(0, MAX_ADMIN_NAME_LENGTH))
+                    setNameError(undefined)
+                  }}
+                />
+                {nameError ? (
+                  <p className="text-xs text-destructive">{nameError}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Name can be edited here. Saving requires an Admin profile-update API that is not published yet.
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="admin-email">Email</Label>
-                <Input id="admin-email" value={user?.email ?? ''} disabled readOnly />
+                <Input id="admin-email" value={user?.email ?? ''} disabled readOnly className="cursor-not-allowed" />
                 <p className="text-xs text-muted-foreground">Email is read-only for the signed-in administrator.</p>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="admin-role">Role</Label>
-                <Input id="admin-role" value={user?.role ?? 'Administrator'} disabled readOnly />
+                <Input
+                  id="admin-role"
+                  value={user?.role ?? 'Administrator'}
+                  disabled
+                  readOnly
+                  className="cursor-not-allowed"
+                />
               </div>
             </div>
 
-            <Button variant="outline" onClick={logout}>
-              Logout
+            <Button type="button" disabled={!canUpdateName} onClick={() => void updateName()}>
+              {namePending ? 'Updating…' : 'Update'}
             </Button>
           </CardContent>
         </Card>
@@ -112,14 +225,22 @@ export function SettingsPage() {
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="font-display text-xl">Appearance</CardTitle>
-            <CardDescription>Light and dark themes persist across sessions.</CardDescription>
+            <CardDescription>Theme preferences and session controls.</CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium">Theme</p>
-              <p className="text-sm text-muted-foreground">Currently using {theme} mode.</p>
+          <CardContent className="space-y-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Theme</p>
+                <p className="text-sm text-muted-foreground">Currently using {theme} mode.</p>
+              </div>
+              <ThemeToggle />
             </div>
-            <ThemeToggle />
+            <div className="space-y-2 border-t pt-4">
+              <p className="text-sm text-muted-foreground">If you want to logout, click here.</p>
+              <Button type="button" variant="outline" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -159,21 +280,21 @@ export function SettingsPage() {
               />
               {payoutError ? <p className="text-xs text-destructive">{payoutError}</p> : null}
             </div>
-            <label className="flex items-center justify-between gap-4 text-sm">
+            <label className="flex cursor-pointer items-center justify-between gap-4 text-sm">
               <span>Amazon enabled</span>
               <Switch
                 checked={form.amazonEnabled}
                 onCheckedChange={(checked) => setDraft({ ...form, amazonEnabled: checked })}
               />
             </label>
-            <label className="flex items-center justify-between gap-4 text-sm">
+            <label className="flex cursor-pointer items-center justify-between gap-4 text-sm">
               <span>Flipkart enabled</span>
               <Switch
                 checked={form.flipkartEnabled}
                 onCheckedChange={(checked) => setDraft({ ...form, flipkartEnabled: checked })}
               />
             </label>
-            <label className="flex items-center justify-between gap-4 text-sm">
+            <label className="flex cursor-pointer items-center justify-between gap-4 text-sm">
               <span>PayPal enabled</span>
               <Switch
                 checked={form.paypalEnabled}
@@ -192,26 +313,79 @@ export function SettingsPage() {
           <CardHeader>
             <CardTitle className="font-display text-xl">Change password</CardTitle>
             <CardDescription>
-              Password changes require an Admin API that is not currently published for this panel.
+              Enter your current and new password. Saving requires an Admin change-password API that is not
+              published yet.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1.5">
                 <Label htmlFor="current-password">Current password</Label>
-                <Input id="current-password" type="password" autoComplete="current-password" disabled />
+                <PasswordInput
+                  id="current-password"
+                  value={currentPassword}
+                  autoComplete="current-password"
+                  placeholder="Current password"
+                  invalid={Boolean(passwordTouched && passwordErrors.current)}
+                  describedBy={passwordErrors.current ? 'current-password-error' : undefined}
+                  onChange={(value) => {
+                    setCurrentPassword(value)
+                    setPasswordErrors((current) => ({ ...current, current: undefined }))
+                  }}
+                />
+                {passwordTouched && passwordErrors.current ? (
+                  <p id="current-password-error" className="text-xs text-destructive" role="alert">
+                    {passwordErrors.current}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="new-password">New password</Label>
-                <Input id="new-password" type="password" autoComplete="new-password" disabled />
+                <PasswordInput
+                  id="new-password"
+                  value={newPassword}
+                  autoComplete="new-password"
+                  placeholder="New password"
+                  invalid={Boolean(passwordTouched && passwordErrors.next)}
+                  describedBy={passwordErrors.next ? 'new-password-error' : undefined}
+                  onChange={(value) => {
+                    setNewPassword(value)
+                    setPasswordErrors((current) => ({ ...current, next: undefined, confirm: undefined }))
+                  }}
+                />
+                {passwordTouched && passwordErrors.next ? (
+                  <p id="new-password-error" className="text-xs text-destructive" role="alert">
+                    {passwordErrors.next}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="confirm-password">Confirm password</Label>
-                <Input id="confirm-password" type="password" autoComplete="new-password" disabled />
+                <PasswordInput
+                  id="confirm-password"
+                  value={confirmPassword}
+                  autoComplete="new-password"
+                  placeholder="Confirm password"
+                  invalid={Boolean(passwordTouched && passwordErrors.confirm)}
+                  describedBy={passwordErrors.confirm ? 'confirm-password-error' : undefined}
+                  onChange={(value) => {
+                    setConfirmPassword(value)
+                    setPasswordErrors((current) => ({ ...current, confirm: undefined }))
+                  }}
+                />
+                {passwordTouched && passwordErrors.confirm ? (
+                  <p id="confirm-password-error" className="text-xs text-destructive" role="alert">
+                    {passwordErrors.confirm}
+                  </p>
+                ) : null}
               </div>
             </div>
-            <Button type="button" disabled>
-              Update password
+            <Button
+              type="button"
+              disabled={!passwordFormValid || passwordPending}
+              onClick={() => void submitPasswordChange()}
+            >
+              {passwordPending ? 'Updating…' : 'Update password'}
             </Button>
           </CardContent>
         </Card>

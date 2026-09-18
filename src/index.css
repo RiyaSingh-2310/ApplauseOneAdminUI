@@ -70,9 +70,18 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
-  button,
-  [role='button'] {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  a[href],
+  [role='link'],
+  summary {
     cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'],
+  [disabled] {
+    cursor: not-allowed;
   }
 
   :focus-visible {

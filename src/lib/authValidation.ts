@@ -1,6 +1,8 @@
 import { isValidEmail } from '@/lib/validators'
 
 export const MIN_PASSWORD_LENGTH = 8
+export const MAX_PASSWORD_LENGTH = 72
+export const MAX_ADMIN_NAME_LENGTH = 80
 
 export function validateAdminEmail(value: string): string | undefined {
   if (!value.trim()) return 'Email address is required.'
@@ -13,5 +15,23 @@ export function validateAdminPassword(value: string): string | undefined {
   if (value.length < MIN_PASSWORD_LENGTH) {
     return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
   }
+  if (value.length > MAX_PASSWORD_LENGTH) {
+    return `Password must be ${MAX_PASSWORD_LENGTH} characters or fewer.`
+  }
+  return undefined
+}
+
+export function validateAdminName(value: string): string | undefined {
+  const name = value.trim()
+  if (!name) return 'Name is required.'
+  if (name.length > MAX_ADMIN_NAME_LENGTH) {
+    return `Name must be ${MAX_ADMIN_NAME_LENGTH} characters or fewer.`
+  }
+  return undefined
+}
+
+export function validatePasswordConfirmation(password: string, confirm: string): string | undefined {
+  if (!confirm) return 'Confirm password is required.'
+  if (password !== confirm) return 'New password and confirmation do not match.'
   return undefined
 }

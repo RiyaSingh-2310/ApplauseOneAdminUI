@@ -116,6 +116,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             disabled={pending}
             invalid={Boolean(showPasswordError)}
             describedBy={showPasswordError ? 'admin-password-error' : undefined}
+            className="login-field h-10 bg-card dark:bg-card"
             onChange={updatePassword}
             onBlur={() => {
               setTouched((current) => ({ ...current, password: true }))
