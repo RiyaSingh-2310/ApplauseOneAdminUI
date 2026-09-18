@@ -196,12 +196,6 @@ export function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-2xl border border-dashed bg-secondary/30 px-4 py-3 text-sm text-muted-foreground">
-              No change-password endpoint is available on{' '}
-              <span className="font-medium text-foreground">/admin</span>. Current password, new password, and
-              confirm password cannot be submitted until the backend adds a supported route. Fake success states
-              are intentionally disabled.
-            </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1.5">
                 <Label htmlFor="current-password">Current password</Label>
