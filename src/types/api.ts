@@ -70,6 +70,20 @@ export interface ApiRewardRequestListData {
   requests: ApiRewardRequest[]
 }
 
+export interface ApiPaymentMethod {
+  id: number | string
+  name: string
+}
+
+export interface ApiPublicSettings {
+  registration_reward_points?: number | string
+  minimum_payout?: number | string
+  amazon_enabled?: number | string
+  flipkart_enabled?: number | string
+  paypal_enabled?: number | string
+  payment_methods?: ApiPaymentMethod[]
+}
+
 export interface ApiSettings {
   id?: number | string
   registration_reward_points?: number | string

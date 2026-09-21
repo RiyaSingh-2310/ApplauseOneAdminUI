@@ -15,6 +15,7 @@ export function useRewardTypes() {
   return useQuery({
     queryKey: queryKeys.rewardTypes,
     queryFn: () => rewardService.types(),
+    staleTime: 60_000,
   })
 }
 

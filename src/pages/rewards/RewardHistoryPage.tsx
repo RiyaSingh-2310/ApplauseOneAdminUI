@@ -15,7 +15,7 @@ import { useExportRewardHistory, useRewardHistory } from '@/hooks/useRewardHisto
 import { useRewardTypes } from '@/hooks/useRewards'
 import { getErrorMessage } from '@/lib/errors'
 import { formatCurrency, formatDateTime, formatNumber } from '@/lib/format'
-import { REQUEST_STATUS_LABELS } from '@/lib/labels'
+import { REQUEST_STATUS_LABELS, paymentMethodLabel } from '@/lib/labels'
 import type { RewardHistoryQuery, RewardRequestStatus } from '@/types'
 
 const defaultQuery: RewardHistoryQuery = {
@@ -93,7 +93,7 @@ export function RewardHistoryPage() {
             <SelectValue placeholder="Reward type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="all">All Type</SelectItem>
             {(types.data ?? []).map((item) => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
@@ -161,6 +161,7 @@ export function RewardHistoryPage() {
               <p className="mt-2 text-xs text-muted-foreground">
                 {formatDateTime(item.transactionDate)} · {formatNumber(item.points)} pts · {item.requestId}
               </p>
+              <p className="mt-1 text-xs text-muted-foreground">{paymentMethodLabel(item.rewardType)}</p>
             </div>
           ))}
         </div>
@@ -183,7 +184,7 @@ export function RewardHistoryPage() {
                   <TableCell className="font-medium">{item.panelistName}</TableCell>
                   <TableCell>
                     <p>{item.rewardName}</p>
-                    <p className="text-xs text-muted-foreground">{item.rewardType}</p>
+                    <p className="text-xs text-muted-foreground">{paymentMethodLabel(item.rewardType)}</p>
                   </TableCell>
                   <TableCell>{formatNumber(item.points)}</TableCell>
                   <TableCell>{formatCurrency(item.value, item.currency)}</TableCell>

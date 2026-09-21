@@ -11,12 +11,14 @@ export function useRewardRequestList(query: RewardRequestListQuery) {
   })
 }
 
-function invalidateRequests(queryClient: ReturnType<typeof useQueryClient>) {
-  void queryClient.invalidateQueries({ queryKey: ['reward-requests'] })
-  void queryClient.invalidateQueries({ queryKey: ['reward-history'] })
-  void queryClient.invalidateQueries({ queryKey: ['panelists'] })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.rewardAnalytics })
+async function refetchAfterMutation(queryClient: ReturnType<typeof useQueryClient>) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['reward-requests'] }),
+    queryClient.invalidateQueries({ queryKey: ['reward-history'] }),
+    queryClient.invalidateQueries({ queryKey: ['panelists'] }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.rewardAnalytics }),
+  ])
 }
 
 export function useRewardRequestAction(onSuccess?: () => void) {
@@ -27,21 +29,16 @@ export function useRewardRequestAction(onSuccess?: () => void) {
       action,
     }: {
       id: string
-      action: 'approve' | 'reject' | 'complete'
+      action: 'approve' | 'reject'
     }) => {
       if (action === 'approve') return rewardRequestService.approve(id)
-      if (action === 'reject') return rewardRequestService.reject(id)
-      return rewardRequestService.approve(id)
+      return rewardRequestService.reject(id)
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: async (_data, variables) => {
+      await refetchAfterMutation(queryClient)
       notify.success(
-        variables.action === 'approve'
-          ? 'Reward request approved.'
-          : variables.action === 'reject'
-            ? 'Reward request rejected.'
-            : 'Reward request marked as completed.',
+        variables.action === 'approve' ? 'Reward request approved.' : 'Reward request rejected.',
       )
-      invalidateRequests(queryClient)
       onSuccess?.()
     },
     onError: (error) => notify.error(error),

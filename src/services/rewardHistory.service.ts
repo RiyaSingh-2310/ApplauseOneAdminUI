@@ -31,13 +31,16 @@ export const rewardHistoryService = {
 
 function filterHistory(rows: RewardTransaction[], query: RewardHistoryQuery) {
   const search = query.search?.trim().toLowerCase()
+  const rewardType = query.rewardType?.trim()
   return rows.filter((item) => {
     if (query.status && query.status !== 'all' && item.status !== query.status) return false
-    if (query.rewardType && query.rewardType !== 'all' && item.rewardType !== query.rewardType) return false
+    if (rewardType && rewardType !== 'all' && item.rewardType !== rewardType) return false
     if (query.panelistId && item.panelistId !== query.panelistId) return false
     if (query.dateFrom && item.transactionDate.slice(0, 10) < query.dateFrom) return false
     if (query.dateTo && item.transactionDate.slice(0, 10) > query.dateTo) return false
     if (!search) return true
-    return `${item.requestId} ${item.panelistName} ${item.rewardName}`.toLowerCase().includes(search)
+    return `${item.requestId} ${item.panelistName} ${item.rewardName} ${item.rewardType}`
+      .toLowerCase()
+      .includes(search)
   })
 }

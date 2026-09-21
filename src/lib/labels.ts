@@ -90,6 +90,30 @@ export const REQUEST_STATUS_LABELS: Record<RewardRequestStatus, string> = {
   completed: 'Completed',
 }
 
+/**
+ * Display-only labels for payment methods returned by the backend/Client catalog.
+ * Filter/API values must remain the raw `name` from payment_methods.
+ */
+const PAYMENT_METHOD_DISPLAY: Record<string, string> = {
+  paypal: 'PayPal',
+  uip: 'UPI',
+  upi: 'UPI',
+  cash: 'Cash',
+  'gift card': 'Gift Card',
+  'gift_card': 'Gift Card',
+  amazon: 'Amazon',
+  'amazon pay': 'Amazon Pay',
+  flipkart: 'Flipkart',
+  myntra: 'Myntra',
+  gpay: 'GPay',
+  'bank transfer': 'Bank Transfer',
+}
+
+export function paymentMethodLabel(name: string) {
+  const key = name.trim().toLowerCase()
+  return PAYMENT_METHOD_DISPLAY[key] ?? name.trim()
+}
+
 export function fullName(firstName: string, lastName: string) {
   return [firstName, lastName].filter(Boolean).join(' ')
 }
