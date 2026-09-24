@@ -23,8 +23,13 @@ export const panelistService = {
   async list(query: PanelistListQuery = {}): Promise<PaginatedResult<Panelist>> {
     const page = query.page ?? 1
     const pageSize = query.pageSize ?? 10
+    const sortNeedsFullSet = Boolean(
+      query.sortBy && !(query.sortBy === 'registeredAt' && (query.sortDir ?? 'desc') === 'desc'),
+    )
     const extraFilters = Boolean(
-      (query.gender && query.gender !== 'all') ||
+      query.verifiedOnly ||
+        sortNeedsFullSet ||
+        (query.gender && query.gender !== 'all') ||
         (query.ageRange && query.ageRange !== 'all') ||
         query.registeredFrom ||
         query.registeredTo,
@@ -150,6 +155,7 @@ async function listAllPanelists(search?: string, status?: string) {
 
 function applyClientFilters(rows: Panelist[], query: PanelistListQuery) {
   return rows.filter((item) => {
+    if (query.verifiedOnly && !item.isVerified) return false
     if (query.status && query.status !== 'all' && item.status !== query.status) return false
     if (query.gender && query.gender !== 'all' && item.gender !== query.gender) return false
     if (query.ageRange && query.ageRange !== 'all' && item.ageRange !== query.ageRange) return false

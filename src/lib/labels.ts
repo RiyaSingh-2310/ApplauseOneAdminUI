@@ -29,6 +29,7 @@ export const AGE_RANGE_LABELS: Record<AgeRange, string> = {
 export const EDUCATION_LABELS: Record<Education, string> = {
   high_school: 'High school',
   some_college: 'Some college',
+  associate: "Associate's",
   bachelors: "Bachelor's",
   masters: "Master's",
   doctorate: 'Doctorate',
@@ -41,15 +42,16 @@ export const EMPLOYMENT_LABELS: Record<Employment, string> = {
   unemployed: 'Unemployed',
   student: 'Student',
   retired: 'Retired',
+  homemaker: 'Homemaker',
 }
 
 export const INCOME_LABELS: Record<HouseholdIncome, string> = {
   under_25k: 'Under $25k',
-  '25k_49k': '$25k–$49k',
-  '50k_74k': '$50k–$74k',
-  '75k_99k': '$75k–$99k',
-  '100k_149k': '$100k–$149k',
-  '150k_plus': '$150k+',
+  '25k_49k': '$25k–$50k',
+  '50k_74k': '$50k–$75k',
+  '75k_99k': '$75k–$100k',
+  '100k_149k': '$100k–$150k',
+  '150k_plus': 'Over $150k',
 }
 
 export const PANELIST_STATUS_LABELS: Record<PanelistStatus, string> = {

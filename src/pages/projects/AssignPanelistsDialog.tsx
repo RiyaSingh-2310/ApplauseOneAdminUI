@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { usePanelistList } from '@/hooks/usePanelists'
 import { formatNumber } from '@/lib/format'
-import { fullName, isAssignablePanelist } from '@/lib/labels'
+import { fullName } from '@/lib/labels'
 import {
   SURVEY_NAME_MAX_LENGTH,
   validatePoints,
@@ -75,10 +75,11 @@ function AssignPanelistsForm({
     page,
     pageSize: 8,
     status: 'active',
+    verifiedOnly: true,
     sortBy: 'registeredAt',
     sortDir: 'desc',
   })
-  const rows = (list.data?.data ?? []).filter(isAssignablePanelist)
+  const rows = list.data?.data ?? []
   const points = Number(rewardPoints)
   const summary = useMemo<AssignmentSummary>(
     () => ({

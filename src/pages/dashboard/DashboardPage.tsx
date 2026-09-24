@@ -30,6 +30,12 @@ export function DashboardPage() {
         crumbs={[{ label: 'Admin', to: '/admin/dashboard' }, { label: 'Dashboard' }]}
       />
 
+      {panelists.isError ? (
+        <div className="mt-4">
+          <ErrorState message={getErrorMessage(panelists.error)} onRetry={() => panelists.refetch()} />
+        </div>
+      ) : null}
+
       {dashboard.isLoading || !data ? (
         <KpiSkeleton />
       ) : (
@@ -54,10 +60,12 @@ export function DashboardPage() {
       )}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
-        <RegistrationTrendChart
-          data={panelists.data?.registrationTrend.daily}
-          loading={panelists.isLoading}
-        />
+        {panelists.isError ? null : (
+          <RegistrationTrendChart
+            data={panelists.data?.registrationTrend.daily}
+            loading={panelists.isLoading}
+          />
+        )}
 
         <Card className="shadow-sm">
           <CardHeader className="flex-row items-center justify-between">
@@ -85,10 +93,12 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <GenderDistributionChart data={panelists.data?.gender} loading={panelists.isLoading} />
-        <AgeDistributionChart data={panelists.data?.ageRange} loading={panelists.isLoading} />
-      </div>
+      {panelists.isError ? null : (
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <GenderDistributionChart data={panelists.data?.gender} loading={panelists.isLoading} />
+          <AgeDistributionChart data={panelists.data?.ageRange} loading={panelists.isLoading} />
+        </div>
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { decodeJwtExpiry } from '@/lib/jwt'
+import { AGE_RANGE_LABELS, EDUCATION_LABELS, EMPLOYMENT_LABELS, INCOME_LABELS } from '@/lib/labels'
 import type {
   AgeRange,
   AuthSession,
@@ -264,10 +265,14 @@ export function buildDashboard(
 export function buildPanelistAnalytics(details: Panelist[]): PanelistAnalytics {
   return {
     gender: countBy(details, (item) => item.gender, (key) => labelLookup(key)),
-    ageRange: countBy(details, (item) => item.ageRange, (key) => key),
-    education: countBy(details, (item) => item.education, (key) => key),
-    employment: countBy(details, (item) => item.employment, (key) => key),
-    householdIncome: countBy(details, (item) => item.householdIncome, (key) => key),
+    ageRange: countBy(details, (item) => item.ageRange, (key) => AGE_RANGE_LABELS[key as AgeRange] ?? key),
+    education: countBy(details, (item) => item.education, (key) => EDUCATION_LABELS[key as Education] ?? key),
+    employment: countBy(details, (item) => item.employment, (key) => EMPLOYMENT_LABELS[key as Employment] ?? key),
+    householdIncome: countBy(
+      details,
+      (item) => item.householdIncome,
+      (key) => INCOME_LABELS[key as HouseholdIncome] ?? key,
+    ),
     shoppingPreferences: countBy(
       details.flatMap((item) => item.surveyPreferences.preferredCategories),
       (item) => item,
@@ -335,18 +340,20 @@ function answerText(answers: ApiPanelistAnswer[], needle: string) {
 
 function parseGender(value: string): Gender | undefined {
   const text = value.toLowerCase()
+  if (!text) return undefined
+  if (text.includes('non-binary') || text.includes('nonbinary') || text.includes('prefer not')) return 'other'
   if (text.includes('female')) return 'female'
   if (text.includes('male')) return 'male'
-  if (text) return 'other'
-  return undefined
+  return 'other'
 }
 
 function parseAgeRange(value: string): AgeRange | undefined {
-  if (value.includes('18')) return '18-24'
-  if (value.includes('25')) return '25-34'
-  if (value.includes('35')) return '35-44'
-  if (value.includes('45')) return '45-54'
-  if (value.includes('55')) return '55+'
+  const text = value.trim().toLowerCase()
+  if (text.startsWith('18')) return '18-24'
+  if (text.startsWith('25')) return '25-34'
+  if (text.startsWith('35')) return '35-44'
+  if (text.startsWith('45')) return '45-54'
+  if (text.startsWith('55') || text.startsWith('65')) return '55+'
   return undefined
 }
 
@@ -364,6 +371,7 @@ function parseEducation(value: string): Education | undefined {
   if (text.includes('doctor')) return 'doctorate'
   if (text.includes('master')) return 'masters'
   if (text.includes('bachelor')) return 'bachelors'
+  if (text.includes('associate')) return 'associate'
   if (text.includes('college')) return 'some_college'
   if (text.includes('high')) return 'high_school'
   return undefined
@@ -371,6 +379,7 @@ function parseEducation(value: string): Education | undefined {
 
 function parseEmployment(value: string): Employment | undefined {
   const text = value.toLowerCase()
+  if (text.includes('home')) return 'homemaker'
   if (text.includes('student')) return 'student'
   if (text.includes('retired')) return 'retired'
   if (text.includes('self')) return 'self_employed'
@@ -381,13 +390,14 @@ function parseEmployment(value: string): Employment | undefined {
 }
 
 function parseIncome(value: string): HouseholdIncome | undefined {
-  const text = value.replace(/\s/g, '').toLowerCase()
-  if (text.includes('150')) return '150k_plus'
-  if (text.includes('100')) return '100k_149k'
-  if (text.includes('75')) return '75k_99k'
-  if (text.includes('50')) return '50k_74k'
-  if (text.includes('25')) return '25k_49k'
-  if (text.includes('under') || text.includes('<')) return 'under_25k'
+  const text = value.toLowerCase().replace(/\s+/g, ' ').trim()
+  if (!text) return undefined
+  if (text.startsWith('under')) return 'under_25k'
+  if (text.startsWith('over')) return '150k_plus'
+  if (text.includes('100') && text.includes('150')) return '100k_149k'
+  if (text.includes('75') && text.includes('100')) return '75k_99k'
+  if (text.includes('50') && text.includes('75')) return '50k_74k'
+  if (text.includes('25') && text.includes('50')) return '25k_49k'
   return undefined
 }
 

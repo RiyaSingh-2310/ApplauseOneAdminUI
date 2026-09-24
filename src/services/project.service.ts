@@ -1,6 +1,6 @@
 import { ApiError } from '@/lib/errors'
 import { apiRequest, toSearch } from '@/lib/apiClient'
-import { mapSurveyAssignment, sortRows } from '@/lib/mappers'
+import { mapSurveyAssignment, paginateRows, sortRows } from '@/lib/mappers'
 import { isValidUrl } from '@/lib/validators'
 import type {
   AssignPanelistsInput,
@@ -24,11 +24,21 @@ export const projectService = {
   async list(query: ProjectListQuery = {}): Promise<PaginatedResult<ProjectAssignment>> {
     const page = query.page ?? 1
     const pageSize = query.pageSize ?? 10
+    const sortNeedsFullSet = Boolean(
+      query.sortBy && !(query.sortBy === 'assignedAt' && (query.sortDir ?? 'desc') === 'desc'),
+    )
+    const params = {
+      q: query.search,
+      status: query.status && query.status !== 'all' ? query.status : undefined,
+      panelist_id: query.panelistId ? toNumericId(query.panelistId, 'panelist') : undefined,
+    }
+    if (sortNeedsFullSet) {
+      const rows = await listAllSurveys(params)
+      return paginateRows(sortRows(rows, mapSortKey(query.sortBy), query.sortDir), page, pageSize)
+    }
     const data = await apiRequest<ApiSurveyListData>(
       `/admin/surveys${toSearch({
-        q: query.search,
-        status: query.status && query.status !== 'all' ? query.status : undefined,
-        panelist_id: query.panelistId ? toNumericId(query.panelistId, 'panelist') : undefined,
+        ...params,
         page,
         limit: pageSize,
       })}`,
@@ -42,14 +52,7 @@ export const projectService = {
     }
   },
   async listForPanelist(panelistId: string): Promise<ProjectAssignment[]> {
-    const data = await apiRequest<ApiSurveyListData>(
-      `/admin/surveys${toSearch({
-        panelist_id: toNumericId(panelistId, 'panelist'),
-        page: 1,
-        limit: 100,
-      })}`,
-    )
-    return (data.items ?? []).map(mapSurveyAssignment)
+    return listAllSurveys({ panelist_id: toNumericId(panelistId, 'panelist') })
   },
   async get(id: string): Promise<ProjectAssignment> {
     const data = await apiRequest<ApiSurveyDetailData>(`/admin/surveys/${toNumericId(id, 'assignment')}`)
@@ -131,6 +134,22 @@ export const projectService = {
     await apiRequest(`/admin/surveys/${toNumericId(id, 'assignment')}`, { method: 'DELETE' })
     return { ok: true }
   },
+}
+
+async function listAllSurveys(query: { q?: string; status?: string; panelist_id?: number }) {
+  const rows: ProjectAssignment[] = []
+  let page = 1
+  let total = Infinity
+  while (rows.length < total && page <= 20) {
+    const data = await apiRequest<ApiSurveyListData>(
+      `/admin/surveys${toSearch({ ...query, page, limit: 100 })}`,
+    )
+    total = data.total ?? data.items?.length ?? 0
+    rows.push(...(data.items ?? []).map(mapSurveyAssignment))
+    if (!data.items?.length) break
+    page += 1
+  }
+  return rows
 }
 
 function unwrapSurvey(data: ApiSurveyDetailData | ApiSurveyAssignment): ApiSurveyAssignment {

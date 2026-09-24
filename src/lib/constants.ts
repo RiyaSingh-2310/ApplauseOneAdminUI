@@ -1,6 +1,6 @@
 import {
   ClipboardList,
-  Gift,
+  // Gift,
   History,
   LayoutDashboard,
   Settings,
@@ -12,7 +12,7 @@ export const ADMIN_NAV = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/panelists', label: 'Panelists', icon: Users },
   { to: '/admin/projects', label: 'Assigned Projects', icon: ClipboardList },
-  { to: '/admin/rewards', label: 'Rewards', icon: Gift },
+  // { to: '/admin/rewards', label: 'Rewards', icon: Gift },
   { to: '/admin/reward-requests', label: 'Reward Requests', icon: Wallet },
   { to: '/admin/reward-history', label: 'Reward History', icon: History },
   // { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },

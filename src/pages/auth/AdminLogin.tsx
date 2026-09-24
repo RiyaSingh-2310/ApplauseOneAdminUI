@@ -1,13 +1,16 @@
 import { ShieldCheck } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { Logo } from '@/components/common/Logo'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 
 export function AdminLogin() {
   const navigate = useNavigate()
+  const location = useLocation()
   const reduceMotion = useReducedMotion()
+  const requestedPath = (location.state as { from?: string } | null)?.from
+  const destination = requestedPath?.startsWith('/admin/') ? requestedPath : '/admin/dashboard'
 
   return (
     <div className="login-canvas grid min-h-svh lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
@@ -41,7 +44,7 @@ export function AdminLogin() {
           </div>
           <h2 className="font-display text-[1.85rem] leading-tight sm:text-3xl">Admin sign in</h2>
           <p className="mt-1 text-sm text-muted-foreground">Use your Applause One administrator credentials.</p>
-          <LoginForm onSuccess={() => navigate('/admin/dashboard', { replace: true })} />
+          <LoginForm onSuccess={() => navigate(destination, { replace: true })} />
         </motion.div>
       </section>
     </div>

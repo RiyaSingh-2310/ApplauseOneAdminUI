@@ -8,6 +8,7 @@ export type PanelistStatus = 'active' | 'inactive' | 'pending'
 export type Education =
   | 'high_school'
   | 'some_college'
+  | 'associate'
   | 'bachelors'
   | 'masters'
   | 'doctorate'
@@ -18,6 +19,7 @@ export type Employment =
   | 'unemployed'
   | 'student'
   | 'retired'
+  | 'homemaker'
 export type HouseholdIncome =
   | 'under_25k'
   | '25k_49k'
@@ -83,4 +85,6 @@ export interface PanelistListQuery extends ListQuery {
   ageRange?: AgeRange | 'all'
   registeredFrom?: string
   registeredTo?: string
+  /** When set, only verified panelists are returned and pagination is applied after that filter. */
+  verifiedOnly?: boolean
 }
