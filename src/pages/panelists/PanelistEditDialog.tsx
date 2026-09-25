@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Field } from '@/components/shared/Field'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -9,8 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { usePanelist } from '@/hooks/usePanelists'
+import { GENDER_LABELS } from '@/lib/labels'
 import { required, sanitizePhoneInput, validateOptionalPhone } from '@/lib/validators'
 import type { Panelist, PanelistStatus, UpdatePanelistInput } from '@/types'
 
@@ -62,6 +64,12 @@ function PanelistEditForm({
     status: panelist.status === 'active' ? 'active' : 'inactive',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const detail = usePanelist(panelist.id)
+  const profile = detail.data
+  const genderAnswer = profile?.onboardingAnswers.find((item) => item.question.toLowerCase().includes('gender'))
+  const genderLabel = profile?.gender
+    ? GENDER_LABELS[profile.gender]
+    : genderAnswer?.answer || (detail.isLoading ? 'Loading…' : '—')
 
   function submit() {
     const next = {
@@ -82,7 +90,10 @@ function PanelistEditForm({
     <DialogContent className="sm:max-w-lg">
       <DialogHeader>
         <DialogTitle>Edit panelist</DialogTitle>
-        <DialogDescription>Update contact details and account status.</DialogDescription>
+        <DialogDescription>
+          Update name, phone, and account status. Gender and onboarding answers come from the panelist detail and
+          cannot be changed here.
+        </DialogDescription>
       </DialogHeader>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="First name" error={errors.firstName}>
@@ -113,6 +124,24 @@ function PanelistEditForm({
             </SelectContent>
           </Select>
         </Field>
+        <Field label="Gender" className="sm:col-span-2">
+          <Input value={genderLabel} disabled readOnly />
+        </Field>
+        <Field label="Verification" className="sm:col-span-2">
+          <Input value={(profile ?? panelist).isVerified ? 'Verified' : 'Unverified'} disabled readOnly />
+        </Field>
+        {detail.isError ? (
+          <p className="text-xs text-destructive sm:col-span-2">
+            Onboarding answers could not be loaded. Name, phone, and status can still be saved.
+          </p>
+        ) : null}
+        {(profile?.onboardingAnswers ?? [])
+          .filter((item) => !item.question.toLowerCase().includes('gender'))
+          .map((item) => (
+            <Field key={item.id || item.question} label={item.question || 'Onboarding answer'} className="sm:col-span-2">
+              <Input value={item.answer || '—'} disabled readOnly />
+            </Field>
+          ))}
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={() => onOpenChange(false)}>

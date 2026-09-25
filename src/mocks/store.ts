@@ -118,6 +118,7 @@ class AdminMockStore {
       recentRewards: this.data.transactions
         .filter((item) => item.panelistId === id)
         .sort((a, b) => +new Date(b.transactionDate) - +new Date(a.transactionDate)),
+      onboardingAnswers: [],
     }
   }
 

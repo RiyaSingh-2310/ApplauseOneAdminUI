@@ -132,7 +132,15 @@ export function PanelistDetailPage() {
             <Info label="Education" value={panelist.education ? EDUCATION_LABELS[panelist.education] : '—'} />
             <Info label="Employment" value={panelist.employment ? EMPLOYMENT_LABELS[panelist.employment] : '—'} />
             <Info label="Household income" value={panelist.householdIncome ? INCOME_LABELS[panelist.householdIncome] : '—'} />
-            <Info label="Household size" value={panelist.householdSize || '—'} />
+            <Info
+              label="Household size"
+              value={
+                panelist.onboardingAnswers.find((item) => item.question.toLowerCase().includes('household size'))
+                  ?.answer ||
+                panelist.householdSize ||
+                '—'
+              }
+            />
           </CardContent>
         </Card>
 
@@ -178,7 +186,25 @@ export function PanelistDetailPage() {
           <Info label="Shopping preference" value={panelist.surveyPreferences.shoppingPreference} />
           <Info label="Typical spend" value={panelist.surveyPreferences.typicalSpend} />
           <Info label="Research participation" value={panelist.surveyPreferences.researchParticipation} />
-          <Info label="Preferred categories" value={panelist.surveyPreferences.preferredCategories.join(', ')} />
+          <Info
+            label="Preferred categories"
+            value={panelist.surveyPreferences.preferredCategories.join(', ') || '—'}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4 shadow-sm">
+        <CardHeader>
+          <CardTitle className="font-display text-xl">Onboarding answers</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          {panelist.onboardingAnswers.length === 0 ? (
+            <EmptyState title="No onboarding answers returned." />
+          ) : (
+            panelist.onboardingAnswers.map((item) => (
+              <Info key={item.id || item.question} label={item.question || 'Answer'} value={item.answer || '—'} />
+            ))
+          )}
         </CardContent>
       </Card>
 

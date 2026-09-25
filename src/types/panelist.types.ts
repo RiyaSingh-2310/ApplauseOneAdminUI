@@ -65,9 +65,17 @@ export interface Panelist {
   surveyPreferences: SurveyPreferences
 }
 
+export interface OnboardingAnswer {
+  id: string
+  question: string
+  answer: string
+}
+
 export interface PanelistDetail extends Panelist {
   assignments: ProjectAssignment[]
   recentRewards: RewardTransaction[]
+  /** Every onboarding answer returned by GET /admin/panelists/{id}. */
+  onboardingAnswers: OnboardingAnswer[]
 }
 
 export interface UpdatePanelistInput {

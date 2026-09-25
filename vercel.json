@@ -1,7 +1,7 @@
 {
   "build": {
     "env": {
-      "VITE_API_BASE_URL": "https://arserviceco.com/applauseoneapi"
+      "VITE_API_BASE_URL": "https://applauseone.com/applauseoneapi"
     }
   },
   "rewrites": [

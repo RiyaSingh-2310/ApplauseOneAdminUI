@@ -1,16 +1,16 @@
 # Applause One Admin UI
 
-Vite + React admin app. Production API: [ApplauseOne Swagger](https://arserviceco.com/applauseoneapi/docs/).
+Vite + React admin app. Production API: [ApplauseOne Swagger](https://applauseone.com/applauseoneapi/docs/).
 
 ## Environment
 
 Configuration lives in `.env` only:
 
-`VITE_API_BASE_URL=https://arserviceco.com/applauseoneapi`
+`VITE_API_BASE_URL=https://applauseone.com/applauseoneapi`
 
 The app reads this through `src/config/api.ts`. Set the same variable in Vercel if the Production build should override it.
 
-Swagger: https://arserviceco.com/applauseoneapi/docs/
+Swagger: https://applauseone.com/applauseoneapi/docs/
 
 ## React + TypeScript + Vite
 

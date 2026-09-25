@@ -1,4 +1,4 @@
-const OFFICIAL_API_BASE_URL = 'https://arserviceco.com/applauseoneapi'
+const OFFICIAL_API_BASE_URL = 'https://applauseone.com/applauseoneapi'
 
 export const API_BASE_URL = resolveApiBaseUrl()
 

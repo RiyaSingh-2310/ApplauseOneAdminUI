@@ -169,6 +169,13 @@ export function mapPanelistDetail(
     completedProjectCount: assignments.filter((assignment) => assignment.status === 'complete').length,
     assignments,
     recentRewards: mine.map(toTransaction),
+    onboardingAnswers: answers
+      .map((answer) => ({
+        id: asString(answer.id ?? answer.question_id),
+        question: (answer.question_text ?? '').trim(),
+        answer: (answer.answer_text ?? '').trim(),
+      }))
+      .filter((answer) => answer.question || answer.answer),
   }
 }
 
