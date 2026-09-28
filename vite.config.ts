@@ -32,6 +32,7 @@ export default defineConfig({
       '@': path.resolve(root, './src'),
     },
   },
+  base: '/admin/',
   server: {
     port: 5174,
     strictPort: false,
